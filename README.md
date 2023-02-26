@@ -15,9 +15,11 @@ To install the project dependencies, run:
 
 Set your toggl API token and workspace ID as well as Redmine API key in the index.js file.
 
-`const togglApiToken = 'YOUR_TOGGL_API_TOKEN';`
-`const togglWorkspaceId = 'YOUR_TOGGL_WORKSPACE_ID';`
-`const redmineApiKey = 'YOUR_REDMINE_API_KEY';`
+```
+const togglApiToken = 'YOUR_TOGGL_API_TOKEN';
+const togglWorkspaceId = 'YOUR_TOGGL_WORKSPACE_ID';
+const redmineApiKey = 'YOUR_REDMINE_API_KEY';
+```
 
 ## Usage
 
