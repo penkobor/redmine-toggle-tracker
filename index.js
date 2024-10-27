@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+require("dotenv").config();
 const request = require("request");
 const readline = require("readline");
 
@@ -16,13 +17,13 @@ const mapOfActivities = {
 };
 
 // Toggl API details
-const togglApiToken = "YOUR_TOGGL_API_TOKEN";
-const togglWorkspaceId = "YOUR_TOGGL_WORKSPACE_ID";
+const togglApiToken = process.env.TOGGL_TOKEN;
+const togglWorkspaceId = process.env.TOGGL_WORKSPACE_ID;
 const togglTimeEntriesUrl =
   "https://api.track.toggl.com/api/v9/me/time_entries";
 
 // Redmine API details
-const redmineApiKey = "YOUR_REDMINE_API_KEY";
+const redmineApiKey = process.env.REDMINE_TOKEN;
 const redmineTimeEntriesUrl = "https://redmine.sabo-gmbh.de/time_entries.json";
 
 const DEFAULT_PROJECT = "VW.LAUT.DEV.LAUT3";
