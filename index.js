@@ -85,6 +85,8 @@ function getTrackerId(trackerName) {
   return trackersMap[trackerName] || 5; // Default to Task if not found
 }
 
+const redmineAuth = { user: redmineApiKey, pass: "pass" };
+
 const fetchJSON = async (url, options) => {
   const resp = await fetch(url, {
     ...options,
@@ -128,16 +130,18 @@ const askQuestion = (question, selector) => {
   });
 };
 
+const createBasicAuth = (authObj) => {
+  const basicString = Object.values(authObj)
+    .map((value) => value)
+    .join(":");
+  return `Basic ${Buffer.from(basicString).toString("base64")}`;
+};
+
 // Function to fetch all projects from Redmine
 async function fetchAllProjects() {
-  const redmineAuth = { user: redmineApiKey, pass: "pass" };
   const redmineProjectsUrl = "https://redmine.sabo-gmbh.de/projects.json";
   let offset = 0;
   const limit = 100;
-
-  const basicString = Object.values(redmineAuth)
-    .map((value) => value)
-    .join(":");
 
   const qs = {
     limit,
@@ -149,7 +153,7 @@ async function fetchAllProjects() {
     const { projects } = await fetchJSON(`${redmineProjectsUrl}${query}`, {
       headers: {
         Accept: "application/json",
-        Authorization: `Basic ${Buffer.from(basicString).toString("base64")}`,
+        Authorization: createBasicAuth(redmineAuth),
       },
     });
 
@@ -185,10 +189,10 @@ async function createTask(taskName, projectName) {
         return idx;
       }
     );
-    selectedProject = projects[projectIndex];
+    const projectFromSelection = projects[projectIndex];
 
-    if (selectedProject) {
-      proceedToCreateIssue(selectedProject);
+    if (projectFromSelection) {
+      proceedToCreateIssue(projectFromSelection);
     }
   }
 
@@ -284,25 +288,14 @@ if (firstArgument === "create-task") {
       workspace_id: togglWorkspaceId,
     };
 
-    const basicString = Buffer.from(
-      Object.values(togglAuth).join(":")
-    ).toString("base64");
-
-    console.log(
-      "url",
-      `${togglTimeEntriesUrl}${makeQueryFromObject(togglParams)}`
-    );
-
     const togglTimeEntries = await fetchJSON(
       `${togglTimeEntriesUrl}${makeQueryFromObject(togglParams)}`,
       {
         headers: {
-          Authorization: `Basic ${basicString}`,
+          Authorization: createBasicAuth(togglAuth),
         },
       }
     );
-
-    console.log(togglTimeEntries);
 
     const togglRealTimeSpend =
       Math.round(
@@ -389,14 +382,10 @@ if (firstArgument === "create-task") {
 
     async function trackTimeInRedmine(redmineTimeEntries) {
       redmineTimeEntries.forEach(function (entry) {
-        const redmineAuth = { user: redmineApiKey, pass: "pass" };
-        const auth = Buffer.from(Object.values(redmineAuth).join(":")).toString(
-          "base64"
-        );
         fetchJSON(redmineTimeEntriesUrl, {
           method: "POST",
           headers: {
-            Authorization: `Basic ${auth}`,
+            Authorization: createBasicAuth(redmineAuth),
           },
           body: JSON.stringify(entry),
         })
