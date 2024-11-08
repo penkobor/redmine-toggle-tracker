@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 require("dotenv").config();
-const request = require("request");
 const readline = require("readline");
 
 const LOG_PRECISELY = "@lp";
