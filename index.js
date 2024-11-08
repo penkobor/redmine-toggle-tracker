@@ -86,208 +86,173 @@ function getTrackerId(trackerName) {
   return trackersMap[trackerName] || 5; // Default to Task if not found
 }
 
+const fetchJSON = async (url, options) => {
+  const resp = await fetch(url, {
+    ...options,
+    headers: {
+      ...options?.headers,
+      Accept: "application/json",
+      "Content-Type": "application/json",
+    },
+  });
+  if (resp.ok) {
+    return resp.json();
+  }
+  const text = await resp.text();
+  throw new Error(`${resp.status} - ${resp.statusText} - ${text}`);
+};
+
+const makeQueryFromObject = (obj) => {
+  return Object.keys(obj)
+    .map((key, idx) => {
+      return `${idx === 0 ? "?" : ""}${key}=${obj[key]}`;
+    })
+    .join("&");
+};
+
+const askQuestion = (question, selector) => {
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+  return new Promise((resolve, reject) => {
+    rl.question(question, (answer) => {
+      try {
+        const resp = selector ? selector(answer) : answer;
+        rl.close();
+        resolve(resp);
+      } catch (err) {
+        console.error(err);
+        reject(err);
+      }
+    });
+  });
+};
+
 // Function to fetch all projects from Redmine
-function fetchAllProjects(callback) {
+async function fetchAllProjects() {
   const redmineAuth = { user: redmineApiKey, pass: "pass" };
   const redmineProjectsUrl = "https://redmine.sabo-gmbh.de/projects.json";
-
-  let allProjects = [];
   let offset = 0;
   const limit = 100;
 
-  function fetchBatch() {
-    const projectsOptions = {
-      url: redmineProjectsUrl,
-      auth: redmineAuth,
-      qs: {
-        limit: limit,
-        offset: offset,
+  const basicString = Object.values(redmineAuth)
+    .map((value) => value)
+    .join(":");
+
+  const qs = {
+    limit,
+    offset,
+  };
+
+  const query = makeQueryFromObject(qs);
+  try {
+    const { projects } = await fetchJSON(`${redmineProjectsUrl}${query}`, {
+      headers: {
+        Accept: "application/json",
+        Authorization: `Basic ${Buffer.from(basicString).toString("base64")}`,
       },
-    };
-
-    request.get(projectsOptions, function (error, response, body) {
-      if (error) {
-        console.log("Failed to fetch projects from Redmine:", error);
-        return callback(error);
-      }
-
-      if (response.statusCode !== 200) {
-        console.log(
-          "Failed to fetch projects from Redmine:",
-          response.statusCode,
-          response.body
-        );
-        return callback(new Error("Failed to fetch projects from Redmine"));
-      }
-
-      const data = JSON.parse(body);
-      const projects = data.projects;
-
-      if (projects.length === 0) {
-        // No more projects to fetch
-        return callback(null, allProjects);
-      }
-
-      allProjects = allProjects.concat(projects);
-
-      // Update offset for the next batch
-      offset += limit;
-
-      // Check if we've fetched all projects
-      if (allProjects.length >= data.total_count) {
-        // All projects fetched
-        callback(null, allProjects);
-      } else {
-        // Fetch next batch
-        fetchBatch();
-      }
     });
-  }
 
-  // Start fetching batches
-  fetchBatch();
+    return projects;
+  } catch (err) {
+    console.error(err);
+  }
 }
 
 // Function to create a new task in Redmine
-function createTask(taskName, projectName) {
+async function createTask(taskName, projectName) {
   const redmineAuth = { user: redmineApiKey, pass: "pass" };
 
-  fetchAllProjects(function (error, projects) {
-    if (error) {
-      console.log("Error fetching projects:", error);
+  const allProjects = await fetchAllProjects();
+  if (!projectName) {
+    if (allProjects.length === 0) {
+      console.log("No projects found in Redmine.");
       return;
     }
+    // Display projects to the user
+    console.log("\nAvailable projects:\n");
+    allProjects.forEach((project, index) => {
+      console.log(`${index + 1}. ${project.name} (ID: ${project.id})`);
+    });
 
-    let selectedProject;
-
-    if (projectName) {
-      // Find the project by name
-      selectedProject = projects.find(
-        (project) => project.name === projectName
-      );
-      if (!selectedProject) {
-        console.log(`Project "${projectName}" not found.`);
-        return;
+    const projectIndex = await askQuestion(
+      "\nEnter the number of the project where the task should be created: ",
+      (answer) => {
+        const idx = parseInt(answer) - 1;
+        if (isNaN(idx) || idx < 0 || idx >= projects.length) {
+          throw new Error("Invalid project selection.");
+        }
+        return idx;
       }
+    );
+    selectedProject = projects[projectIndex];
+
+    if (selectedProject) {
       proceedToCreateIssue(selectedProject);
-    } else {
-      if (projects.length === 0) {
-        console.log("No projects found in Redmine.");
-        return;
+    }
+  }
+
+  const selectedProject = allProjects.find((p) => p.name === projectName);
+  if (!selectedProject) {
+    console.log(`Project "${projectName}" not found.`);
+    return;
+  }
+  proceedToCreateIssue(selectedProject);
+
+  async function proceedToCreateIssue(selectedProject) {
+    // Prompt for tracker type
+    const trackers = ["Task", "Bug"];
+    console.log("\nAvailable trackers:\n");
+    trackers.forEach((tracker, index) => {
+      console.log(`${index + 1}. ${tracker}`);
+    });
+
+    const trackerIndex = await askQuestion(
+      "\nEnter the number of the tracker type: ",
+      (answer) => {
+        const index = parseInt(answer) - 1;
+        if (isNaN(index) || index < 0 || index >= trackers.length) {
+          throw new Error("Invalid tracker selection.");
+        }
+        return index;
       }
-      // Display projects to the user
-      console.log("\nAvailable projects:\n");
-      projects.forEach((project, index) => {
-        console.log(`${index + 1}. ${project.name} (ID: ${project.id})`);
-      });
+    );
+    const selectedTracker = trackers[trackerIndex];
 
-      // Prompt the user to select a project
-      const rl = readline.createInterface({
-        input: process.stdin,
-        output: process.stdout,
-      });
+    const description = await askQuestion(
+      "\nEnter the description of the task (optional): "
+    );
 
-      rl.question(
-        "\nEnter the number of the project where the task should be created: ",
-        (answer) => {
-          const projectIndex = parseInt(answer) - 1;
-          if (
-            isNaN(projectIndex) ||
-            projectIndex < 0 ||
-            projectIndex >= projects.length
-          ) {
-            console.log("Invalid project selection.");
-            rl.close();
-            return;
-          }
-          selectedProject = projects[projectIndex];
-          rl.close();
-          proceedToCreateIssue(selectedProject);
+    const issueData = {
+      issue: {
+        project_id: selectedProject.id,
+        subject: taskName,
+        tracker_id: getTrackerId(selectedTracker),
+        description: description,
+      },
+    };
+
+    const basicString = Object.values(redmineAuth)
+      .map((value) => value)
+      .join(":");
+
+    try {
+      const { issue } = await fetchJSON(
+        "https://redmine.sabo-gmbh.de/issues.json",
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Basic ${basicString}`,
+          },
+          body: issueData,
         }
       );
+      console.log(`\nIssue created successfully with ID #${issue.id}`);
+    } catch (err) {
+      console.log(err);
     }
-
-    function proceedToCreateIssue(selectedProject) {
-      // Prompt for tracker type
-      const trackers = ["Task", "Bug"];
-      console.log("\nAvailable trackers:\n");
-      trackers.forEach((tracker, index) => {
-        console.log(`${index + 1}. ${tracker}`);
-      });
-
-      const rl = readline.createInterface({
-        input: process.stdin,
-        output: process.stdout,
-      });
-
-      rl.question(
-        "\nEnter the number of the tracker type: ",
-        (trackerAnswer) => {
-          const trackerIndex = parseInt(trackerAnswer) - 1;
-          if (
-            isNaN(trackerIndex) ||
-            trackerIndex < 0 ||
-            trackerIndex >= trackers.length
-          ) {
-            console.log("Invalid tracker selection.");
-            rl.close();
-            return;
-          }
-          const selectedTracker = trackers[trackerIndex];
-
-          // Prompt for description
-          rl.question(
-            "\nEnter the description of the task (optional): ",
-            (description) => {
-              rl.close();
-
-              // Now we have all the info, create the task via API
-              const issueData = {
-                issue: {
-                  project_id: selectedProject.id,
-                  subject: taskName,
-                  tracker_id: getTrackerId(selectedTracker),
-                  description: description,
-                },
-              };
-
-              const createIssueOptions = {
-                url: "https://redmine.sabo-gmbh.de/issues.json",
-                auth: redmineAuth,
-                headers: {
-                  "Content-Type": "application/json",
-                },
-                json: issueData,
-              };
-
-              request.post(
-                createIssueOptions,
-                function (error, response, body) {
-                  if (error) {
-                    console.log("Failed to create issue in Redmine:", error);
-                    return;
-                  }
-
-                  if (response.statusCode !== 201) {
-                    console.log(
-                      "Failed to create issue in Redmine:",
-                      response.statusCode,
-                      response.body
-                    );
-                    return;
-                  }
-
-                  console.log(
-                    `\nIssue created successfully with ID #${body.issue.id}`
-                  );
-                }
-              );
-            }
-          );
-        }
-      );
-    }
-  });
+  }
 }
 
 if (firstArgument === "create-task") {
@@ -303,42 +268,42 @@ if (firstArgument === "create-task") {
     return dates[firstArgument] || dates.today;
   };
 
-  // SET ALL YOU NEED HERE
-  const OPTIONS = {
-    WHEN: timeIntervalBasedOnArgument(),
-    N_OF_HOURS: secondArgument ?? 8,
-  };
-
-  // Get Toggl time entries for today
-  const togglAuth = { user: togglApiToken, pass: "api_token" };
-  const togglParams = {
-    start_date: OPTIONS.WHEN + "T00:00:00+00:00",
-    end_date: OPTIONS.WHEN + "T23:59:59+00:00",
-    workspace_id: togglWorkspaceId,
-  };
-  const togglOptions = {
-    url: togglTimeEntriesUrl,
-    auth: togglAuth,
-    qs: togglParams,
-  };
-
-  request.get(togglOptions, function (error, response, body) {
-    if (error) {
-      console.log("Failed to get Toggl time entries:", error);
-      return;
-    }
-
-    if (response.statusCode !== 200) {
-      console.log("Failed to get Toggl time entries:", response.statusCode);
-      return;
-    }
-
-    // Extract time entry details
-    const togglTimeEntries = JSON.parse(body).filter(
-      (entry) => entry.description !== undefined
-    );
+  async function trackTime() {
+    // SET ALL YOU NEED HERE
+    const OPTIONS = {
+      WHEN: timeIntervalBasedOnArgument(),
+      N_OF_HOURS: secondArgument ?? 8,
+    };
 
     const redmineTimeEntries = [];
+
+    // Get Toggl time entries for today
+    const togglAuth = { user: togglApiToken, pass: "api_token" };
+    const togglParams = {
+      start_date: OPTIONS.WHEN + "T00:00:00Z",
+      end_date: OPTIONS.WHEN + "T23:59:59Z",
+      workspace_id: togglWorkspaceId,
+    };
+
+    const basicString = Buffer.from(
+      Object.values(togglAuth).join(":")
+    ).toString("base64");
+
+    console.log(
+      "url",
+      `${togglTimeEntriesUrl}${makeQueryFromObject(togglParams)}`
+    );
+
+    const togglTimeEntries = await fetchJSON(
+      `${togglTimeEntriesUrl}${makeQueryFromObject(togglParams)}`,
+      {
+        headers: {
+          Authorization: `Basic ${basicString}`,
+        },
+      }
+    );
+
+    console.log(togglTimeEntries);
 
     const togglRealTimeSpend =
       Math.round(
@@ -413,48 +378,40 @@ if (firstArgument === "create-task") {
       );
     });
 
-    const rl = readline.createInterface({
-      input: process.stdin,
-      output: process.stdout,
-    });
-
-    rl.question(
-      "\nDo you want to proceed with tracking these time entries in Redmine? (y/n) ",
-      (answer) => {
-        rl.close();
-        if (answer.toLowerCase() === "y") {
-          trackTimeInRedmine(redmineTimeEntries);
-        } else {
-          console.log("Time tracking cancelled.");
-        }
-      }
+    const pushToRedmine = await askQuestion(
+      "\nDo you want to proceed with tracking these time entries in Redmine? (y/n)"
     );
-  });
 
-  function trackTimeInRedmine(redmineTimeEntries) {
-    redmineTimeEntries.forEach(function (entry) {
-      const redmineAuth = { user: redmineApiKey, pass: "pass" };
-      const redmineOptions = {
-        url: redmineTimeEntriesUrl,
-        headers: "application/json",
-        auth: redmineAuth,
-        json: entry,
-      };
+    if (pushToRedmine === "y") {
+      trackTimeInRedmine(redmineTimeEntries);
+    } else {
+      console.log("Time tracking cancelled.");
+    }
 
-      request.post(redmineOptions, function (error, response, body) {
-        if (error) {
-          console.log("Failed to track time in Redmine:", error);
-          return;
-        }
-
-        if (response.statusCode !== 201) {
-          console.log("Failed to track time in Redmine:", response.body);
-          return;
-        }
-        console.log(
-          `#${entry.time_entry.issue_id}: ${entry.time_entry.hours}h tracked in Redmine.`
+    async function trackTimeInRedmine(redmineTimeEntries) {
+      redmineTimeEntries.forEach(function (entry) {
+        const redmineAuth = { user: redmineApiKey, pass: "pass" };
+        const auth = Buffer.from(Object.values(redmineAuth).join(":")).toString(
+          "base64"
         );
+        fetchJSON(redmineTimeEntriesUrl, {
+          method: "POST",
+          headers: {
+            Authorization: `Basic ${auth}`,
+          },
+          body: JSON.stringify(entry),
+        })
+          .then(() => {
+            console.log(
+              `#${entry.time_entry.issue_id}: ${entry.time_entry.hours}h tracked in Redmine.`
+            );
+          })
+          .catch((error) => {
+            console.log("Failed to track time in Redmine:", error);
+          });
       });
-    });
+    }
   }
+
+  trackTime();
 }
