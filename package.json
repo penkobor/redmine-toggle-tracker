@@ -2,15 +2,19 @@
   "name": "nodejs-project",
   "version": "1.0.0",
   "description": "nodejs project",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js"
+    "start": "node dist/index.js",
+    "build": "tsc"
   },
   "author": "nodejs",
   "license": "ISC",
   "dependencies": {
     "dotenv": "^16.4.5",
     "express": "^4.17.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
   }
 }
