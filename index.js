@@ -236,19 +236,15 @@ async function createTask(taskName, projectName) {
       },
     };
 
-    const basicString = Object.values(redmineAuth)
-      .map((value) => value)
-      .join(":");
-
     try {
       const { issue } = await fetchJSON(
         "https://redmine.sabo-gmbh.de/issues.json",
         {
           method: "POST",
           headers: {
-            Authorization: `Basic ${basicString}`,
+            Authorization: createBasicAuth(redmineAuth),
           },
-          body: issueData,
+          body: JSON.stringify(issueData),
         }
       );
       console.log(`\nIssue created successfully with ID #${issue.id}`);
