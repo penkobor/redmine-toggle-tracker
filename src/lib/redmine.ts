@@ -79,8 +79,8 @@ async function fetchAllProjects(redmineAuth: RedmineAuth): Promise<Project[]> {
   return allProjects;
 }
 
-function getTrackerId(trackerName) {
-  const trackersMap = {
+function getTrackerId(trackerName: string): number {
+  const trackersMap: { [key: string]: number } = {
     Task: 5,
     Bug: 1,
   };
@@ -128,7 +128,7 @@ async function createTask(
   }
   proceedToCreateIssue(selectedProject);
 
-  async function proceedToCreateIssue(selectedProject) {
+  async function proceedToCreateIssue(selectedProject: Project) {
     // Prompt for tracker type
     const trackers = ["Task", "Bug"];
     console.log("\nAvailable trackers:\n");
@@ -160,10 +160,6 @@ async function createTask(
         description: description,
       },
     };
-
-    const basicString = Object.values(redmineAuth)
-      .map((value) => value)
-      .join(":");
 
     try {
       const { issue } = await fetchJSON(
@@ -275,7 +271,7 @@ async function trackTimeInRedmine(
     } catch (error) {
       console.error(
         `Failed to track time for issue #${entry.time_entry.issue_id}:`,
-        error.message
+        (error as Error).message
       );
     }
   }

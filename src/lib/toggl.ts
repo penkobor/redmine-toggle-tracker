@@ -1,19 +1,11 @@
 import { createBasicAuth } from "./auth";
-import { fetchJSON } from "./helpers";
-
-const makeQueryFromObject = (obj) => {
-  return Object.keys(obj)
-    .map((key, idx) => {
-      return `${idx === 0 ? "?" : ""}${key}=${obj[key]}`;
-    })
-    .join("&");
-};
+import { fetchJSON, makeQueryFromObject } from "./helpers";
 
 export async function fetchTogglTimeEntries(
-  togglAuth,
-  togglUrl,
-  date,
-  togglWorkspaceId
+  togglAuth: { username: string; password: string },
+  togglUrl: string,
+  date: string,
+  togglWorkspaceId: string
 ) {
   const params = {
     start_date: `${date}T00:00:00Z`,
@@ -22,9 +14,7 @@ export async function fetchTogglTimeEntries(
   };
 
   const url = `${togglUrl}${makeQueryFromObject(params)}`;
-  console.log(url, createBasicAuth(togglAuth));
   try {
-    console.log(url, createBasicAuth(togglAuth));
     const response = await fetchJSON(url, {
       headers: {
         Authorization: createBasicAuth(togglAuth),
