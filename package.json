@@ -8,6 +8,9 @@
     "start": "node dist/index.js",
     "build": "tsc"
   },
+  "bin": {
+    "redmine": "dist/index.js"
+  },
   "author": "nodejs",
   "license": "ISC",
   "dependencies": {

@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 import dotenv from "dotenv";
 dotenv.config();
 
@@ -31,9 +32,9 @@ const defaultProjectId = process.env.DEFAULT_PROJECT!;
         📖 Usage: 
           🚀 create-task <taskName> <projectName> - Create a new task
           🔍 search <query> - Search for issues
-          ⏱️ track-time <daysAgo> <hours> - Track time in Redmine
+          ⏱️  track-time <daysAgo> <hours> - Track time in Redmine
 
-        ⚙️ Options:
+        ⚙️  Options:
           -h, --help  Show help
       `);
       break;
@@ -108,7 +109,7 @@ const defaultProjectId = process.env.DEFAULT_PROJECT!;
 
       console.log(`🔎 Searching for issues with query: "${searchQuery}"`);
 
-      const issues = await searchIssues(searchQuery, redmineAuth, redmineUrl);
+      const issues = await searchIssues(searchQuery, redmineAuth);
 
       if (issues.length > 0) {
         console.log("✅ Issues found:");

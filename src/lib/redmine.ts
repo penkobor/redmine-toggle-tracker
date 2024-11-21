@@ -7,7 +7,6 @@ interface TogglEntry {
   description: string;
   duration: number;
   start: string;
-  // ...other properties...
 }
 
 interface RedmineEntry {
@@ -20,20 +19,9 @@ interface RedmineEntry {
   };
 }
 
-const makeQueryFromObject = (obj: Record<string, any>): string => {
-  return Object.keys(obj)
-    .map((key, idx) => {
-      return `${idx === 0 ? "?" : ""}${key}=${obj[key]}`;
-    })
-    .join("&");
-};
-
-// Define the Project interface based on Redmine's API response
 interface Project {
-  // Add the relevant fields based on your API response
   id: number;
   name: string;
-  // ... other fields
 }
 
 // Function to fetch all projects from Redmine
@@ -295,12 +283,11 @@ async function trackTimeInRedmine(
 
 async function searchIssues(
   searchQuery: string,
-  redmineAuth: RedmineAuth,
-  redmineUrl: string
+  redmineAuth: RedmineAuth
 ): Promise<any[]> {
   const encodedQuery = encodeURIComponent(searchQuery);
   const url =
-    `${redmineUrl}/issues.json?` +
+    `${"https://redmine-lite.netlify.app/api"}/issues.json?` +
     `offset=0&limit=20&` +
     `f[]=subject&op[subject]=~&v[subject][]=${encodedQuery}` +
     `&sort=updated_on:desc`;
