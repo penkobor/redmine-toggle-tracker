@@ -5,23 +5,29 @@ A Node.js project that takes your time entries from Toggl and delivers them stra
 ## 📋 Prerequisites
 
 - 🟢 Node.js and npm installed on your system.
-- 🟢 Yarn installed globally.
+- 🟢 .env is configured
 - 🟢 For the script to do its thing, Toggl entries need a Redmine issue ID in the description, formatted like `#issue_id` (e.g., `#12233: some description`). It hunts for the `#` and grabs the issue ID from there.
 
 ## 📦 Installation
 
-To set up the project globally, just follow these steps:
+To install the project globally, just run
+
+```sh
+./install.sh
+```
+
+alternatively you can do it manually by following these steps:
 
 1. **Install the project dependencies:**
 
    ```sh
-   yarn install
+   npm install
    ```
 
 2. **Build the project:**
 
    ```sh
-   yarn build
+   npm run build
    ```
 
 3. **Make the built script executable:**
