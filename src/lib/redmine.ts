@@ -27,7 +27,7 @@ interface Project {
 // Function to fetch all projects from Redmine
 async function fetchAllProjects(redmineAuth: RedmineAuth): Promise<Project[]> {
   const redmineApiKey = redmineAuth.username; // Replace with your actual API key
-  const redmineProjectsUrl = "https://redmine.sabo-gmbh.de/projects.json";
+  const redmineProjectsUrl = `${process.env.REDMINE_API_URL}projects.json`;
 
   let allProjects: Project[] = [];
   let offset = 0;
@@ -163,7 +163,7 @@ async function createTask(
 
     try {
       const { issue } = await fetchJSON(
-        "https://redmine.sabo-gmbh.de/issues.json",
+        `${process.env.REDMINE_API_URL}issues.json`,
         {
           method: "POST",
           headers: {
