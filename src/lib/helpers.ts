@@ -43,7 +43,11 @@ export function validateAndAdjustRedmineUrl(url: string, skipValidation: boolean
     try {
       new URL(url);
     } catch (e) {
-      throw new Error("Invalid URL format");
+      console.error(`❌ Invalid URL format: ${url}`);
+      console.error("🔍 Error details:", {
+        url,
+      });
+      throw new Error(`Invalid URL format: ${url}`);
     }
   }
 

@@ -28,11 +28,21 @@ export async function createTaskCommand(
   redmineAuth: { username: string; password: string }
 ) {
   if (!taskName) {
-    console.log("❌ Please provide a task name.");
+    console.log("❌ Error: Task name is missing. Please provide a task name.");
     process.exit(1);
   }
 
-  await createRedmineTask(taskName, projectName, redmineAuth);
+  try {
+    await createRedmineTask(taskName, projectName, redmineAuth);
+  } catch (error) {
+    console.error("❌ Error creating task:", error.message);
+    console.error("🔍 Error details:", {
+      taskName,
+      projectName,
+      redmineAuth,
+    });
+    process.exit(1);
+  }
 }
 
 // Function to handle 'track-time' command
@@ -60,31 +70,45 @@ export async function trackTimeCommand(props: {
     `Track ${totalHours} hours for date "${date}"? (yes/no): `
   );
   if (trackConfirmation.trim().toLowerCase() === "yes") {
-    const togglEntries = await fetchTogglTimeEntries(
-      togglAuth,
-      togglUrl,
-      date,
-      togglWorkspaceId
-    );
-
-    const redmineEntries = prepareRedmineEntries(togglEntries, totalHours);
-
-    console.log("\n⏳ Time entries to be tracked in Redmine:\n");
-    redmineEntries.forEach((entry) => {
-      console.log(
-        `⏱️  Issue #${entry.time_entry.issue_id}: ${entry.time_entry.hours}h - ${entry.time_entry.comments}`
+    try {
+      const togglEntries = await fetchTogglTimeEntries(
+        togglAuth,
+        togglUrl,
+        date,
+        togglWorkspaceId
       );
-    });
 
-    const proceed: string = await askQuestion(
-      "\nDo you want to proceed with tracking these time entries in Redmine? (yes/no): "
-    );
+      const redmineEntries = prepareRedmineEntries(togglEntries, totalHours);
 
-    if (proceed.trim().toLowerCase() === "yes") {
-      await trackTimeInRedmine(redmineEntries, redmineAuth, redmineUrl);
-      console.log("✅ Time tracked successfully.");
-    } else {
-      console.log("🚫 Time tracking aborted.");
+      console.log("\n⏳ Time entries to be tracked in Redmine:\n");
+      redmineEntries.forEach((entry) => {
+        console.log(
+          `⏱️  Issue #${entry.time_entry.issue_id}: ${entry.time_entry.hours}h - ${entry.time_entry.comments}`
+        );
+      });
+
+      const proceed: string = await askQuestion(
+        "\nDo you want to proceed with tracking these time entries in Redmine? (yes/no): "
+      );
+
+      if (proceed.trim().toLowerCase() === "yes") {
+        await trackTimeInRedmine(redmineEntries, redmineAuth, redmineUrl);
+        console.log("✅ Time tracked successfully.");
+      } else {
+        console.log("🚫 Time tracking aborted.");
+      }
+    } catch (error) {
+      console.error("❌ Error tracking time:", error.message);
+      console.error("🔍 Error details:", {
+        daysAgo,
+        totalHours,
+        redmineAuth,
+        redmineUrl,
+        togglAuth,
+        togglUrl,
+        togglWorkspaceId,
+      });
+      process.exit(1);
     }
   } else {
     console.log("🚫 Time tracking aborted.");
@@ -97,20 +121,29 @@ export async function searchCommand(
   redmineAuth: { username: string; password: string }
 ) {
   if (!searchQuery) {
-    console.log("❌ Please provide a search query.");
+    console.log("❌ Error: Search query is missing. Please provide a search query.");
     process.exit(1);
   }
 
   console.log(`🔎 Searching for issues with query: "${searchQuery}"`);
 
-  const issues = await searchIssues(searchQuery, redmineAuth);
+  try {
+    const issues = await searchIssues(searchQuery, redmineAuth);
 
-  if (issues.length > 0) {
-    console.log("✅ Issues found:");
-    issues.forEach((issue) => {
-      console.log(`- #${issue.id}: ${issue.subject}`);
+    if (issues.length > 0) {
+      console.log("✅ Issues found:");
+      issues.forEach((issue) => {
+        console.log(`- #${issue.id}: ${issue.subject}`);
+      });
+    } else {
+      console.log("No issues found.");
+    }
+  } catch (error) {
+    console.error("❌ Error searching issues:", error.message);
+    console.error("🔍 Error details:", {
+      searchQuery,
+      redmineAuth,
     });
-  } else {
-    console.log("No issues found.");
+    process.exit(1);
   }
 }

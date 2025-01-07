@@ -22,7 +22,14 @@ export async function fetchTogglTimeEntries(
     });
     return response;
   } catch (err) {
-    console.error("Failed to fetch Toggl time entries:", err);
-    return [];
+    console.error("❌ Failed to fetch Toggl time entries:", err.message);
+    console.error("🔍 Error details:", {
+      url,
+      params,
+      headers: {
+        Authorization: createBasicAuth(togglAuth),
+      },
+    });
+    process.exit(1);
   }
 }
