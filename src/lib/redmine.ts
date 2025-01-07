@@ -71,7 +71,13 @@ async function fetchAllProjects(redmineAuth: RedmineAuth): Promise<Project[]> {
         break;
       }
     } catch (error) {
-      console.error("Failed to fetch projects from Redmine:", error);
+      console.error("Failed to fetch projects from Redmine:", error.message);
+      console.error("🔍 Error details:", {
+        redmineProjectsUrl,
+        offset,
+        limit,
+        headers,
+      });
       throw error;
     }
   }
@@ -92,90 +98,103 @@ async function createTask(
   projectName: string,
   redmineAuth: RedmineAuth
 ): Promise<void> {
-  const allProjects = await fetchAllProjects(redmineAuth);
-  if (!projectName) {
-    if (allProjects.length === 0) {
-      console.log("No projects found in Redmine.");
-      return;
-    }
-    // Display projects to the user
-    console.log("\nAvailable projects:\n");
-    allProjects.forEach((project, index) => {
-      console.log(`${index + 1}. ${project.name} (ID: ${project.id})`);
-    });
-
-    const projectIndex = await askQuestion(
-      "\nEnter the number of the project where the task should be created: ",
-      (answer) => {
-        const idx = parseInt(answer) - 1;
-        if (isNaN(idx) || idx < 0 || idx >= allProjects.length) {
-          throw new Error("Invalid project selection.");
-        }
-        return idx;
+  try {
+    const allProjects = await fetchAllProjects(redmineAuth);
+    if (!projectName) {
+      if (allProjects.length === 0) {
+        console.log("No projects found in Redmine.");
+        return;
       }
-    );
-    const projectFromSelection = allProjects[projectIndex];
+      // Display projects to the user
+      console.log("\nAvailable projects:\n");
+      allProjects.forEach((project, index) => {
+        console.log(`${index + 1}. ${project.name} (ID: ${project.id})`);
+      });
 
-    if (projectFromSelection) {
-      proceedToCreateIssue(projectFromSelection);
-    }
-  }
-
-  const selectedProject = allProjects.find((p) => p.name === projectName);
-  if (!selectedProject) {
-    console.log(`Project "${projectName}" not found.`);
-    return;
-  }
-  proceedToCreateIssue(selectedProject);
-
-  async function proceedToCreateIssue(selectedProject: Project) {
-    // Prompt for tracker type
-    const trackers = ["Task", "Bug"];
-    console.log("\nAvailable trackers:\n");
-    trackers.forEach((tracker, index) => {
-      console.log(`${index + 1}. ${tracker}`);
-    });
-
-    const trackerIndex = await askQuestion(
-      "\nEnter the number of the tracker type: ",
-      (answer) => {
-        const index = parseInt(answer) - 1;
-        if (isNaN(index) || index < 0 || index >= trackers.length) {
-          throw new Error("Invalid tracker selection.");
-        }
-        return index;
-      }
-    );
-    const selectedTracker = trackers[trackerIndex];
-
-    const description = await askQuestion(
-      "\nEnter the description of the task (optional): "
-    );
-
-    const issueData = {
-      issue: {
-        project_id: selectedProject.id,
-        subject: taskName,
-        tracker_id: getTrackerId(selectedTracker),
-        description: description,
-      },
-    };
-
-    try {
-      const { issue } = await fetchJSON(
-        `${validateAndAdjustRedmineUrl(process.env.REDMINE_API_URL)}issues.json`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: createBasicAuth(redmineAuth),
-          },
-          body: JSON.stringify(issueData),
+      const projectIndex = await askQuestion(
+        "\nEnter the number of the project where the task should be created: ",
+        (answer) => {
+          const idx = parseInt(answer) - 1;
+          if (isNaN(idx) || idx < 0 || idx >= allProjects.length) {
+            throw new Error("Invalid project selection.");
+          }
+          return idx;
         }
       );
-      console.log(`\nIssue created successfully with ID #${issue.id}`);
-    } catch (err) {
-      console.log(err);
+      const projectFromSelection = allProjects[projectIndex];
+
+      if (projectFromSelection) {
+        proceedToCreateIssue(projectFromSelection);
+      }
     }
+
+    const selectedProject = allProjects.find((p) => p.name === projectName);
+    if (!selectedProject) {
+      console.log(`Project "${projectName}" not found.`);
+      return;
+    }
+    proceedToCreateIssue(selectedProject);
+
+    async function proceedToCreateIssue(selectedProject: Project) {
+      // Prompt for tracker type
+      const trackers = ["Task", "Bug"];
+      console.log("\nAvailable trackers:\n");
+      trackers.forEach((tracker, index) => {
+        console.log(`${index + 1}. ${tracker}`);
+      });
+
+      const trackerIndex = await askQuestion(
+        "\nEnter the number of the tracker type: ",
+        (answer) => {
+          const index = parseInt(answer) - 1;
+          if (isNaN(index) || index < 0 || index >= trackers.length) {
+            throw new Error("Invalid tracker selection.");
+          }
+          return index;
+        }
+      );
+      const selectedTracker = trackers[trackerIndex];
+
+      const description = await askQuestion(
+        "\nEnter the description of the task (optional): "
+      );
+
+      const issueData = {
+        issue: {
+          project_id: selectedProject.id,
+          subject: taskName,
+          tracker_id: getTrackerId(selectedTracker),
+          description: description,
+        },
+      };
+
+      try {
+        const { issue } = await fetchJSON(
+          `${validateAndAdjustRedmineUrl(process.env.REDMINE_API_URL)}issues.json`,
+          {
+            method: "POST",
+            headers: {
+              Authorization: createBasicAuth(redmineAuth),
+            },
+            body: JSON.stringify(issueData),
+          }
+        );
+        console.log(`\nIssue created successfully with ID #${issue.id}`);
+      } catch (err) {
+        console.error("❌ Error creating issue:", err.message);
+        console.error("🔍 Error details:", {
+          issueData,
+          redmineAuth,
+        });
+      }
+    }
+  } catch (error) {
+    console.error("❌ Error fetching projects:", error.message);
+    console.error("🔍 Error details:", {
+      taskName,
+      projectName,
+      redmineAuth,
+    });
   }
 }
 
@@ -273,6 +292,11 @@ async function trackTimeInRedmine(
         `Failed to track time for issue #${entry.time_entry.issue_id}:`,
         (error as Error).message
       );
+      console.error("🔍 Error details:", {
+        entry,
+        redmineAuth,
+        redmineUrl,
+      });
     }
   }
 }
@@ -297,6 +321,11 @@ async function searchIssues(
     return response.issues;
   } catch (err) {
     console.error("Failed to search issues:", err);
+    console.error("🔍 Error details:", {
+      searchQuery,
+      redmineAuth,
+      url,
+    });
     return [];
   }
 }
