@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import dotenv from "dotenv";
 import path from "path";
+import { validateAndAdjustRedmineUrl } from "./lib/helpers";
 
 dotenv.config({ path: path.join(__dirname, "..", ".env") });
 
@@ -18,7 +19,7 @@ import {
     username: process.env.REDMINE_TOKEN!,
     password: "pass",
   };
-  const redmineUrl = process.env.REDMINE_API_URL!;
+  const redmineUrl = validateAndAdjustRedmineUrl(process.env.REDMINE_API_URL!);
 
   const togglAuth = {
     username: process.env.TOGGL_API_TOKEN!,

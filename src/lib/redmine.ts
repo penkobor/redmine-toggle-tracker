@@ -1,4 +1,4 @@
-import { fetchJSON } from "./helpers";
+import { fetchJSON, validateAndAdjustRedmineUrl } from "./helpers";
 import { createBasicAuth, RedmineAuth } from "./auth";
 import { getActivityId } from "./activities";
 import { askQuestion } from "./questions";
@@ -27,7 +27,7 @@ interface Project {
 // Function to fetch all projects from Redmine
 async function fetchAllProjects(redmineAuth: RedmineAuth): Promise<Project[]> {
   const redmineApiKey = redmineAuth.username; // Replace with your actual API key
-  const redmineProjectsUrl = `${process.env.REDMINE_API_URL}projects.json`;
+  const redmineProjectsUrl = `${validateAndAdjustRedmineUrl(process.env.REDMINE_API_URL)}projects.json`;
 
   let allProjects: Project[] = [];
   let offset = 0;
@@ -163,7 +163,7 @@ async function createTask(
 
     try {
       const { issue } = await fetchJSON(
-        `${process.env.REDMINE_API_URL}issues.json`,
+        `${validateAndAdjustRedmineUrl(process.env.REDMINE_API_URL)}issues.json`,
         {
           method: "POST",
           headers: {
