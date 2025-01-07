@@ -34,7 +34,7 @@ export async function createTaskCommand(
 
   try {
     await createRedmineTask(taskName, projectName, redmineAuth);
-  } catch (error) {
+  } catch (error: any) {
     console.error("❌ Error creating task:", error.message);
     console.error("🔍 Error details:", {
       taskName,
@@ -97,7 +97,7 @@ export async function trackTimeCommand(props: {
       } else {
         console.log("🚫 Time tracking aborted.");
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("❌ Error tracking time:", error.message);
       console.error("🔍 Error details:", {
         daysAgo,
@@ -121,7 +121,9 @@ export async function searchCommand(
   redmineAuth: { username: string; password: string }
 ) {
   if (!searchQuery) {
-    console.log("❌ Error: Search query is missing. Please provide a search query.");
+    console.log(
+      "❌ Error: Search query is missing. Please provide a search query."
+    );
     process.exit(1);
   }
 
@@ -138,7 +140,7 @@ export async function searchCommand(
     } else {
       console.log("No issues found.");
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error("❌ Error searching issues:", error.message);
     console.error("🔍 Error details:", {
       searchQuery,

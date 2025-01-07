@@ -21,7 +21,7 @@ export async function fetchTogglTimeEntries(
       },
     });
     return response;
-  } catch (err) {
+  } catch (err: any) {
     console.error("❌ Failed to fetch Toggl time entries:", err.message);
     console.error("🔍 Error details:", {
       url,

@@ -27,7 +27,9 @@ interface Project {
 // Function to fetch all projects from Redmine
 async function fetchAllProjects(redmineAuth: RedmineAuth): Promise<Project[]> {
   const redmineApiKey = redmineAuth.username; // Replace with your actual API key
-  const redmineProjectsUrl = `${validateAndAdjustRedmineUrl(process.env.REDMINE_API_URL)}projects.json`;
+  const redmineProjectsUrl = `${validateAndAdjustRedmineUrl(
+    process.env.REDMINE_API_URL!
+  )}projects.json`;
 
   let allProjects: Project[] = [];
   let offset = 0;
@@ -70,7 +72,7 @@ async function fetchAllProjects(redmineAuth: RedmineAuth): Promise<Project[]> {
         // All projects fetched
         break;
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to fetch projects from Redmine:", error.message);
       console.error("🔍 Error details:", {
         redmineProjectsUrl,
@@ -170,7 +172,9 @@ async function createTask(
 
       try {
         const { issue } = await fetchJSON(
-          `${validateAndAdjustRedmineUrl(process.env.REDMINE_API_URL)}issues.json`,
+          `${validateAndAdjustRedmineUrl(
+            process.env.REDMINE_API_URL!
+          )}issues.json`,
           {
             method: "POST",
             headers: {
@@ -180,7 +184,7 @@ async function createTask(
           }
         );
         console.log(`\nIssue created successfully with ID #${issue.id}`);
-      } catch (err) {
+      } catch (err: any) {
         console.error("❌ Error creating issue:", err.message);
         console.error("🔍 Error details:", {
           issueData,
@@ -188,7 +192,7 @@ async function createTask(
         });
       }
     }
-  } catch (error) {
+  } catch (error: any) {
     console.error("❌ Error fetching projects:", error.message);
     console.error("🔍 Error details:", {
       taskName,

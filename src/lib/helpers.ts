@@ -38,7 +38,10 @@ export function getDateString(daysAgo: number): string {
   return date.toISOString().split("T")[0];
 }
 
-export function validateAndAdjustRedmineUrl(url: string, skipValidation: boolean = false): string {
+export function validateAndAdjustRedmineUrl(
+  url: string,
+  skipValidation: boolean = false
+): string {
   if (!skipValidation) {
     try {
       new URL(url);
