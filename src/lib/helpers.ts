@@ -37,3 +37,19 @@ export function getDateString(daysAgo: number): string {
   date.setDate(date.getDate() - daysAgo);
   return date.toISOString().split("T")[0];
 }
+
+export function validateAndAdjustRedmineUrl(url: string, skipValidation: boolean = false): string {
+  if (!skipValidation) {
+    try {
+      new URL(url);
+    } catch (e) {
+      throw new Error("Invalid URL format");
+    }
+  }
+
+  if (!url.endsWith("/")) {
+    url += "/";
+  }
+
+  return url.trim();
+}
