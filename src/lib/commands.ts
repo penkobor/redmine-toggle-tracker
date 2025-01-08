@@ -14,8 +14,8 @@ export async function showHelp() {
     📖 Usage: 
       🚀 create-task <taskName> <projectName> - Create a new task
       🔍 search <query> - Search for issues
-      ⏱️  toggle <daysAgo> <hours> - Track time in Redmine
-      ⏱️  track <issueID> <hours> <comment> - Track hours directly to a task
+      ⏱️  toggle <daysAgo> <hours> - Import time entries from Toggle to Redmine
+      ⏱️  track <issueID> <hours> <comment> - Track hours directly to a task in Redmine
 
     ⚙️  Options:
       -h, --help  Show help
