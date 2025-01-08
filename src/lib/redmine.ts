@@ -305,13 +305,16 @@ async function trackTimeInRedmine(
   }
 }
 
+// Function to search issues using the standard Redmine API
 async function searchIssues(
   searchQuery: string,
   redmineAuth: RedmineAuth
 ): Promise<any[]> {
   const encodedQuery = encodeURIComponent(searchQuery);
   const url =
-    `${"https://redmine-lite.netlify.app/api"}/issues.json?` +
+    `${validateAndAdjustRedmineUrl(
+      process.env.REDMINE_API_URL!
+    )}issues.json?` +
     `offset=0&limit=20&` +
     `f[]=subject&op[subject]=~&v[subject][]=${encodedQuery}` +
     `&sort=updated_on:desc`;
