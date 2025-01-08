@@ -99,3 +99,19 @@ Example:
 ```sh
 redmine get-entries 7
 ```
+
+### Fetch Only Your Time Entries from Toggl
+
+To fetch only your time entries from Toggl for a specific number of days ago, use the following command:
+
+```sh
+redmine get-my-entries <daysAgo>
+```
+
+- `<daysAgo>`: The number of days ago to fetch time entries for.
+
+Example:
+
+```sh
+redmine get-my-entries 7
+```

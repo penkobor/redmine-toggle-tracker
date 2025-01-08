@@ -12,6 +12,7 @@ import {
   trackTimeCommand,
   searchCommand,
   getEntriesCommand,
+  getMyEntriesCommand, // P205f
 } from "./lib/commands";
 
 (async function main() {
@@ -96,6 +97,11 @@ import {
         const daysAgoForEntries = arg1 ? parseInt(arg1) : 0;
         await getEntriesCommand(daysAgoForEntries, redmineAuth, redmineUrl);
         break;
+
+      case "get-my-entries": // P205f
+        const daysAgoForMyEntries = arg1 ? parseInt(arg1) : 0; // P205f
+        await getMyEntriesCommand(daysAgoForMyEntries, togglAuth, togglUrl); // P205f
+        break; // P205f
 
       default:
         console.log("❌ Invalid command. Use --help for options.");

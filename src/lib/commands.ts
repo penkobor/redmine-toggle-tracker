@@ -18,6 +18,7 @@ export async function showHelp() {
       ⏱️  toggle <daysAgo> <hours> - Import time entries from Toggle to Redmine
       ⏱️  track <issueID> <hours> <comment> - Track hours directly to a task in Redmine
       📅 get-entries <daysAgo> - Fetch time entries from Redmine
+      📅 get-my-entries <daysAgo> - Fetch only your time entries from Toggl
 
     ⚙️  Options:
       -h, --help  Show help
@@ -230,6 +231,43 @@ export async function getEntriesCommand(
       daysAgo,
       redmineAuth,
       redmineUrl,
+    });
+    process.exit(1);
+  }
+}
+
+// Function to handle 'get-my-entries' command
+export async function getMyEntriesCommand(
+  daysAgo: number,
+  togglAuth: { username: string; password: string },
+  togglUrl: string
+) {
+  const date = getDateString(daysAgo);
+
+  try {
+    const togglEntries = await fetchTogglTimeEntries(
+      togglAuth,
+      togglUrl,
+      date,
+      process.env.TOGGL_WORKSPACE_ID!
+    );
+
+    if (togglEntries.length > 0) {
+      console.log(`✅ Your time entries for ${date}:`);
+      togglEntries.forEach((entry: any) => {
+        console.log(
+          `- ${entry.description}: ${entry.duration / 3600}h`
+        );
+      });
+    } else {
+      console.log(`No time entries found for ${date}.`);
+    }
+  } catch (error: any) {
+    console.error("❌ Error fetching time entries:", error.message);
+    console.error("🔍 Error details:", {
+      daysAgo,
+      togglAuth,
+      togglUrl,
     });
     process.exit(1);
   }
