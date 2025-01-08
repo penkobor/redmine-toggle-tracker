@@ -84,25 +84,9 @@ Example:
 redmine track 12345 2.5 "Worked on feature X"
 ```
 
-### Fetch Time Entries from Redmine
+### Fetch Only Your Time Entries from Redmine
 
-To fetch time entries from Redmine for a specific number of days ago, use the following command:
-
-```sh
-redmine get-entries <daysAgo>
-```
-
-- `<daysAgo>`: The number of days ago to fetch time entries for.
-
-Example:
-
-```sh
-redmine get-entries 7
-```
-
-### Fetch Only Your Time Entries from Toggl
-
-To fetch only your time entries from Toggl for a specific number of days ago, use the following command:
+To fetch only your time entries from Redmine for a specific number of days ago, use the following command:
 
 ```sh
 redmine get-my-entries <daysAgo>

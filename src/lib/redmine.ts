@@ -337,13 +337,13 @@ async function searchIssues(
   }
 }
 
-// Function to fetch time entries from Redmine
-async function fetchRedmineTimeEntries(
+// Function to fetch only user's time entries from Redmine
+async function fetchMyRedmineTimeEntries(
   redmineAuth: RedmineAuth,
   redmineUrl: string,
   date: string
 ): Promise<any[]> {
-  const url = `${redmineUrl}/time_entries.json?spent_on=${date}`;
+  const url = `${redmineUrl}/time_entries.json?spent_on=${date}&user_id=me`;
 
   try {
     const response = await fetchJSON(url, {
@@ -353,7 +353,7 @@ async function fetchRedmineTimeEntries(
     });
     return response.time_entries;
   } catch (err) {
-    console.error("Failed to fetch time entries:", err);
+    console.error("Failed to fetch your time entries:", err);
     console.error("🔍 Error details:", {
       date,
       redmineAuth,
@@ -370,5 +370,5 @@ export {
   trackTimeInRedmine,
   searchIssues,
   prepareRedmineEntries,
-  fetchRedmineTimeEntries,
+  fetchMyRedmineTimeEntries,
 };

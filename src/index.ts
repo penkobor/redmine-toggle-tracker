@@ -11,8 +11,7 @@ import {
   createTaskCommand,
   trackTimeCommand,
   searchCommand,
-  getEntriesCommand,
-  getMyEntriesCommand, // P205f
+  getMyEntriesCommand,
 } from "./lib/commands";
 
 (async function main() {
@@ -93,15 +92,10 @@ import {
         await searchCommand(searchQuery, redmineAuth);
         break;
 
-      case "get-entries":
-        const daysAgoForEntries = arg1 ? parseInt(arg1) : 0;
-        await getEntriesCommand(daysAgoForEntries, redmineAuth, redmineUrl);
+      case "get-my-entries":
+        const daysAgoForMyEntries = arg1 ? parseInt(arg1) : 0;
+        await getMyEntriesCommand(daysAgoForMyEntries, togglAuth, togglUrl);
         break;
-
-      case "get-my-entries": // P205f
-        const daysAgoForMyEntries = arg1 ? parseInt(arg1) : 0; // P205f
-        await getMyEntriesCommand(daysAgoForMyEntries, togglAuth, togglUrl); // P205f
-        break; // P205f
 
       default:
         console.log("❌ Invalid command. Use --help for options.");
