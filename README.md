@@ -83,3 +83,19 @@ Example:
 ```sh
 redmine track 12345 2.5 "Worked on feature X"
 ```
+
+### Fetch Time Entries from Redmine
+
+To fetch time entries from Redmine for a specific number of days ago, use the following command:
+
+```sh
+redmine get-entries <daysAgo>
+```
+
+- `<daysAgo>`: The number of days ago to fetch time entries for.
+
+Example:
+
+```sh
+redmine get-entries 7
+```
