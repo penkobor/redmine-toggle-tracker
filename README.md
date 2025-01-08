@@ -65,3 +65,21 @@ After installing the project globally, run the script using
 ```sh
 redmine -h
 ```
+
+### Track Hours Directly to a Task
+
+To track hours directly to a specific task, use the following command:
+
+```sh
+redmine track <issueID> <hours> <comment>
+```
+
+- `<issueID>`: The ID of the Redmine issue.
+- `<hours>`: The number of hours to track.
+- `<comment>`: A comment describing the work done.
+
+Example:
+
+```sh
+redmine track 12345 2.5 "Worked on feature X"
+```
