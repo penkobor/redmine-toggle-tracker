@@ -2,6 +2,7 @@
 import dotenv from "dotenv";
 import path from "path";
 import { validateAndAdjustRedmineUrl } from "./lib/helpers";
+import { trackTaskCommand } from "./lib/commands";
 
 dotenv.config({ path: path.join(__dirname, "..", ".env") });
 
@@ -14,7 +15,7 @@ import {
 
 (async function main() {
   try {
-    const [command, arg1, arg2] = process.argv.slice(2);
+    const [command, arg1, arg2, arg3] = process.argv.slice(2);
 
     const redmineAuth = {
       username: process.env.REDMINE_TOKEN!,
@@ -70,6 +71,13 @@ import {
           togglUrl,
           togglWorkspaceId,
         });
+        break;
+
+      case "track":
+        const issueID = arg1;
+        const hours = arg2 ? parseFloat(arg2) : 0;
+        const comment = arg3 ?? "";
+        await trackTaskCommand(issueID, hours, comment, redmineAuth, redmineUrl);
         break;
 
       case "search":

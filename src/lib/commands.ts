@@ -15,6 +15,7 @@ export async function showHelp() {
       🚀 create-task <taskName> <projectName> - Create a new task
       🔍 search <query> - Search for issues
       ⏱️  track-time <daysAgo> <hours> - Track time in Redmine
+      ⏱️  track <issueID> <hours> <comment> - Track hours directly to a task
 
     ⚙️  Options:
       -h, --help  Show help
@@ -115,6 +116,52 @@ export async function trackTimeCommand(props: {
   }
 }
 
+// Function to handle 'track' command
+export async function trackTaskCommand(
+  issueID: string,
+  hours: number,
+  comment: string,
+  redmineAuth: { username: string; password: string },
+  redmineUrl: string
+) {
+  if (!issueID || !hours) {
+    console.log("❌ Error: Issue ID and hours are required.");
+    process.exit(1);
+  }
+
+  const trackConfirmation: string = await askQuestion(
+    `Track ${hours} hours to issue #${issueID} with comment "${comment}"? (yes/no): `
+  );
+  if (trackConfirmation.trim().toLowerCase() === "yes") {
+    try {
+      const redmineEntry = {
+        time_entry: {
+          issue_id: Number(issueID),
+          hours: Math.round(hours * 100) / 100,
+          spent_on: new Date().toISOString().split("T")[0],
+          comments: comment,
+          activity_id: 9, // Assuming 9 is the default activity ID
+        },
+      };
+
+      await trackTimeInRedmine([redmineEntry], redmineAuth, redmineUrl);
+      console.log("✅ Time tracked successfully.");
+    } catch (error: any) {
+      console.error("❌ Error tracking time:", error.message);
+      console.error("🔍 Error details:", {
+        issueID,
+        hours,
+        comment,
+        redmineAuth,
+        redmineUrl,
+      });
+      process.exit(1);
+    }
+  } else {
+    console.log("🚫 Time tracking aborted.");
+  }
+}
+
 // Function to handle 'search' command
 export async function searchCommand(
   searchQuery: string,
@@ -149,3 +196,5 @@ export async function searchCommand(
     process.exit(1);
   }
 }
+
+export { trackTaskCommand };
