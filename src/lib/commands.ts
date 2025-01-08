@@ -14,7 +14,7 @@ export async function showHelp() {
     📖 Usage: 
       🚀 create-task <taskName> <projectName> - Create a new task
       🔍 search <query> - Search for issues
-      ⏱️  track-time <daysAgo> <hours> - Track time in Redmine
+      ⏱️  toggle <daysAgo> <hours> - Track time in Redmine
       ⏱️  track <issueID> <hours> <comment> - Track hours directly to a task
 
     ⚙️  Options:
@@ -46,7 +46,7 @@ export async function createTaskCommand(
   }
 }
 
-// Function to handle 'track-time' command
+// Function to handle 'toggle' command
 export async function trackTimeCommand(props: {
   daysAgo: number;
   totalHours: number;

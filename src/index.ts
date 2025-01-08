@@ -59,7 +59,7 @@ import {
         await createTaskCommand(taskName, projectName, redmineAuth);
         break;
 
-      case "track-time":
+      case "toggle":
         const daysAgo = arg1 ? parseInt(arg1) : 0;
         const totalHours = arg2 ? parseFloat(arg2) : 8;
         await trackTimeCommand({
@@ -77,7 +77,13 @@ import {
         const issueID = arg1;
         const hours = arg2 ? parseFloat(arg2) : 0;
         const comment = arg3 ?? "";
-        await trackTaskCommand(issueID, hours, comment, redmineAuth, redmineUrl);
+        await trackTaskCommand(
+          issueID,
+          hours,
+          comment,
+          redmineAuth,
+          redmineUrl
+        );
         break;
 
       case "search":
