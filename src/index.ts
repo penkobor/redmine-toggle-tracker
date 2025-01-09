@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import path from "path";
 import { validateAndAdjustRedmineUrl } from "./lib/helpers";
 import { trackTaskCommand } from "./lib/commands";
+import "./completion"; // Import tab completion setup
 
 dotenv.config({ path: path.join(__dirname, "..", ".env") });
 

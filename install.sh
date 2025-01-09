@@ -20,4 +20,8 @@ chmod +x dist/index.js || { echo "❌ Error: Failed to make the file executable"
 echo "🌐 Installing the project globally..."
 npm install -g . || { echo "❌ Error: Failed to install the project globally"; exit 1; }
 
+# 5. Setting up tab completion
+echo "🔄 Setting up tab completion..."
+npm run postinstall || { echo "❌ Error: Failed to set up tab completion"; exit 1; }
+
 echo "🎉 Installation complete! The 'redmine' command is now available globally."
