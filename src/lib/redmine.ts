@@ -366,6 +366,38 @@ async function fetchUserTimeEntries(
   }
 }
 
+// Function to delete a time entry from Redmine
+async function deleteTimeEntry(
+  entryId: number,
+  redmineAuth: RedmineAuth
+): Promise<void> {
+  const url = `${validateAndAdjustRedmineUrl(
+    process.env.REDMINE_API_URL!
+  )}time_entries/${entryId}.json`;
+
+  try {
+    const response = await fetch(url, {
+      method: "DELETE",
+      headers: {
+        Authorization: createBasicAuth(redmineAuth),
+      },
+    });
+
+    if (!response.ok) {
+      throw new Error(`Failed to delete time entry with ID ${entryId}`);
+    }
+
+    console.log(`Time entry with ID ${entryId} deleted successfully.`);
+  } catch (err) {
+    console.error("Failed to delete time entry:", err);
+    console.error("🔍 Error details:", {
+      entryId,
+      redmineAuth,
+      url,
+    });
+  }
+}
+
 export {
   fetchAllProjects,
   createTask,
@@ -373,4 +405,5 @@ export {
   searchIssues,
   prepareRedmineEntries,
   fetchUserTimeEntries,
+  deleteTimeEntry,
 };

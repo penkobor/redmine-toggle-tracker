@@ -6,6 +6,7 @@ import {
   searchIssues,
   trackTimeInRedmine,
   fetchUserTimeEntries,
+  deleteTimeEntry,
 } from "./redmine";
 import { fetchTogglTimeEntries } from "./toggl";
 
@@ -18,6 +19,7 @@ export async function showHelp() {
       ⏱️  toggle <daysAgo> <hours> - Import time entries from Toggle to Redmine
       ⏱️  track <issueID> <hours> <comment> - Track hours directly to a task in Redmine
       📅 get-entries <daysAgo> - Fetch and print your tracked time entries in Redmine
+      ❌ delete <daysAgo> - Delete a time entry for a specific day
 
     ⚙️  Options:
       -h, --help  Show help
@@ -224,6 +226,58 @@ export async function getEntriesCommand(
     }
   } catch (error: any) {
     console.error("❌ Error fetching time entries:", error.message);
+    console.error("🔍 Error details:", {
+      daysAgo,
+      redmineAuth,
+    });
+    process.exit(1);
+  }
+}
+
+// Function to handle 'delete' command
+export async function deleteEntryCommand(
+  daysAgo: number,
+  redmineAuth: { username: string; password: string }
+) {
+  const date = getDateString(daysAgo);
+
+  try {
+    const entries = await fetchUserTimeEntries(redmineAuth, date);
+
+    if (entries.length > 0) {
+      console.log(`✅ Time entries for ${date}:`);
+      entries.forEach((entry) => {
+        console.log(
+          `- ID: ${entry.id}, Issue #${entry.issue.id}: ${entry.hours}h - ${entry.comments}`
+        );
+      });
+
+      const entryIdToDelete: number = await askQuestion(
+        "\nEnter the ID of the entry you want to delete: ",
+        (answer) => {
+          const id = parseInt(answer);
+          if (isNaN(id)) {
+            throw new Error("Invalid entry ID.");
+          }
+          return id;
+        }
+      );
+
+      const deleteConfirmation: string = await askQuestion(
+        `Are you sure you want to delete entry ID ${entryIdToDelete}? (yes/no): `
+      );
+
+      if (deleteConfirmation.trim().toLowerCase() === "yes") {
+        await deleteTimeEntry(entryIdToDelete, redmineAuth);
+        console.log("✅ Time entry deleted successfully.");
+      } else {
+        console.log("🚫 Deletion aborted.");
+      }
+    } else {
+      console.log(`No time entries found for ${date}.`);
+    }
+  } catch (error: any) {
+    console.error("❌ Error deleting time entry:", error.message);
     console.error("🔍 Error details:", {
       daysAgo,
       redmineAuth,
