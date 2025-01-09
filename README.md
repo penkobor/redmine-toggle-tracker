@@ -71,17 +71,18 @@ redmine -h
 To track hours directly to a specific task, use the following command:
 
 ```sh
-redmine track <issueID> <hours> <comment>
+redmine track <issueID> <hours> <comment> <daysAgo>
 ```
 
 - `<issueID>`: The ID of the Redmine issue.
 - `<hours>`: The number of hours to track.
 - `<comment>`: A comment describing the work done.
+- `<daysAgo>`: The number of days ago to track the hours (default is 0).
 
 Example:
 
 ```sh
-redmine track 12345 2.5 "Worked on feature X"
+redmine track 12345 2.5 "Worked on feature X" 1
 ```
 
 ### Fetch and Print Your Tracked Time Entries

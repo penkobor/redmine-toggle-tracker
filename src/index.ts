@@ -17,7 +17,7 @@ import {
 
 (async function main() {
   try {
-    const [command, arg1, arg2, arg3] = process.argv.slice(2);
+    const [command, arg1, arg2, arg3, arg4] = process.argv.slice(2);
 
     const redmineAuth = {
       username: process.env.REDMINE_TOKEN!,
@@ -79,10 +79,12 @@ import {
         const issueID = arg1;
         const hours = arg2 ? parseFloat(arg2) : 0;
         const comment = arg3 ?? "";
+        const daysAgoTrack = arg4 ? parseInt(arg4) : 0;
         await trackTaskCommand(
           issueID,
           hours,
           comment,
+          daysAgoTrack,
           redmineAuth,
           redmineUrl
         );
