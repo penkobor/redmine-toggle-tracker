@@ -11,6 +11,7 @@ import {
   createTaskCommand,
   trackTimeCommand,
   searchCommand,
+  getEntriesCommand,
 } from "./lib/commands";
 
 (async function main() {
@@ -89,6 +90,11 @@ import {
       case "search":
         const searchQuery = arg1;
         await searchCommand(searchQuery, redmineAuth);
+        break;
+
+      case "get-entries":
+        const daysAgoEntries = arg1 ? parseInt(arg1) : 0;
+        await getEntriesCommand(daysAgoEntries, redmineAuth);
         break;
 
       default:

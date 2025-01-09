@@ -83,3 +83,19 @@ Example:
 ```sh
 redmine track 12345 2.5 "Worked on feature X"
 ```
+
+### Fetch and Print Your Tracked Time Entries
+
+To fetch and print your tracked time entries in Redmine, use the following command:
+
+```sh
+redmine get-entries <daysAgo>
+```
+
+- `<daysAgo>`: The number of days ago to fetch the entries for (default is 0).
+
+Example:
+
+```sh
+redmine get-entries 0
+```
