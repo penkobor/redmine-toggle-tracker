@@ -6,7 +6,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node dist/index.js",
-    "build": "tsc"
+    "build": "tsc",
+    "ink": "ink"
   },
   "bin": {
     "redmine": "dist/index.js"
@@ -16,7 +17,9 @@
   "dependencies": {
     "@types/node": "^22.9.1",
     "dotenv": "^16.4.5",
-    "express": "^4.17.1"
+    "express": "^4.17.1",
+    "ink": "^3.0.8",
+    "react": "^17.0.2"
   },
   "devDependencies": {
     "typescript": "^5.0.0"

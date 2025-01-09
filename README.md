@@ -21,13 +21,13 @@ alternatively you can do it manually by following these steps:
 1. **Install the project dependencies:**
 
    ```sh
-   npm install
+   ink install
    ```
 
 2. **Build the project:**
 
    ```sh
-   npm run build
+   ink build
    ```
 
 3. **Make the built script executable:**
@@ -39,7 +39,7 @@ alternatively you can do it manually by following these steps:
 4. **Install the project globally:**
 
    ```sh
-   npm install -g .
+   ink install -g .
    ```
 
    This will make the `redmine` command available globally.
