@@ -222,3 +222,23 @@ The main flow of the application is as follows:
 4. The results are displayed to the user, and any necessary user input is prompted using the functions from `src/lib/questions.ts`.
 
 This modular structure ensures that the code is organized, maintainable, and easy to understand.
+
+## 🔄 Enabling Tab Completion
+
+To enable tab completion for the `redmine` command, follow these steps:
+
+1. **Install the project globally** (if not already done):
+
+   ```sh
+   npm install -g .
+   ```
+
+2. **Run the postinstall script** to set up tab completion:
+
+   ```sh
+   npm run postinstall
+   ```
+
+3. **Restart your terminal** to apply the changes.
+
+After completing these steps, you should be able to use tab completion for the `redmine` command and its subcommands.
