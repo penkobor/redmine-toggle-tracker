@@ -337,10 +337,40 @@ async function searchIssues(
   }
 }
 
+// Function to fetch the user's tracked time entries from Redmine
+async function fetchUserTimeEntries(
+  redmineAuth: RedmineAuth,
+  date: string
+): Promise<any[]> {
+  const url =
+    `${validateAndAdjustRedmineUrl(
+      process.env.REDMINE_API_URL!
+    )}time_entries.json?` +
+    `user_id=me&spent_on=${date}`;
+
+  try {
+    const response = await fetchJSON(url, {
+      headers: {
+        Authorization: createBasicAuth(redmineAuth),
+      },
+    });
+    return response.time_entries;
+  } catch (err) {
+    console.error("Failed to fetch time entries:", err);
+    console.error("🔍 Error details:", {
+      date,
+      redmineAuth,
+      url,
+    });
+    return [];
+  }
+}
+
 export {
   fetchAllProjects,
   createTask,
   trackTimeInRedmine,
   searchIssues,
   prepareRedmineEntries,
+  fetchUserTimeEntries,
 };

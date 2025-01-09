@@ -5,6 +5,7 @@ import {
   prepareRedmineEntries,
   searchIssues,
   trackTimeInRedmine,
+  fetchUserTimeEntries,
 } from "./redmine";
 import { fetchTogglTimeEntries } from "./toggl";
 
@@ -16,6 +17,7 @@ export async function showHelp() {
       🔍 search <query> - Search for issues
       ⏱️  toggle <daysAgo> <hours> - Import time entries from Toggle to Redmine
       ⏱️  track <issueID> <hours> <comment> - Track hours directly to a task in Redmine
+      📅 get-entries <daysAgo> - Fetch and print your tracked time entries in Redmine
 
     ⚙️  Options:
       -h, --help  Show help
@@ -191,6 +193,39 @@ export async function searchCommand(
     console.error("❌ Error searching issues:", error.message);
     console.error("🔍 Error details:", {
       searchQuery,
+      redmineAuth,
+    });
+    process.exit(1);
+  }
+}
+
+// Function to handle 'get-entries' command
+export async function getEntriesCommand(
+  daysAgo: number,
+  redmineAuth: { username: string; password: string }
+) {
+  const date = getDateString(daysAgo);
+
+  try {
+    const entries = await fetchUserTimeEntries(redmineAuth, date);
+
+    if (entries.length > 0) {
+      console.log(`✅ Time entries for ${date}:`);
+      let totalHours = 0;
+      entries.forEach((entry) => {
+        console.log(
+          `- Issue #${entry.issue.id}: ${entry.hours}h - ${entry.comments}`
+        );
+        totalHours += entry.hours;
+      });
+      console.log(`\nTotal hours tracked: ${totalHours}h`);
+    } else {
+      console.log(`No time entries found for ${date}.`);
+    }
+  } catch (error: any) {
+    console.error("❌ Error fetching time entries:", error.message);
+    console.error("🔍 Error details:", {
+      daysAgo,
       redmineAuth,
     });
     process.exit(1);
