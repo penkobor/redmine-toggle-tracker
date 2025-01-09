@@ -12,6 +12,7 @@ import {
   trackTimeCommand,
   searchCommand,
   getEntriesCommand,
+  deleteEntryCommand,
 } from "./lib/commands";
 
 (async function main() {
@@ -95,6 +96,11 @@ import {
       case "get-entries":
         const daysAgoEntries = arg1 ? parseInt(arg1) : 0;
         await getEntriesCommand(daysAgoEntries, redmineAuth);
+        break;
+
+      case "delete":
+        const daysAgoDelete = arg1 ? parseInt(arg1) : 0;
+        await deleteEntryCommand(daysAgoDelete, redmineAuth);
         break;
 
       default:
