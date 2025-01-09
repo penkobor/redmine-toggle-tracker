@@ -17,7 +17,7 @@ export async function showHelp() {
       🚀 create-task <taskName> <projectName> - Create a new task
       🔍 search <query> - Search for issues
       ⏱️  toggle <daysAgo> <hours> - Import time entries from Toggle to Redmine
-      ⏱️  track <issueID> <hours> <comment> - Track hours directly to a task in Redmine
+      ⏱️  track <issueID> <hours> <comment> <daysAgo> - Track hours directly to a task in Redmine
       📅 get-entries <daysAgo> - Fetch and print your tracked time entries in Redmine
       ❌ delete <daysAgo> - Delete a time entry for a specific day
 
@@ -125,6 +125,7 @@ export async function trackTaskCommand(
   issueID: string,
   hours: number,
   comment: string,
+  daysAgo: number,
   redmineAuth: { username: string; password: string },
   redmineUrl: string
 ) {
@@ -142,7 +143,7 @@ export async function trackTaskCommand(
         time_entry: {
           issue_id: Number(issueID),
           hours: Math.round(hours * 100) / 100,
-          spent_on: new Date().toISOString().split("T")[0],
+          spent_on: getDateString(daysAgo),
           comments: comment,
           activity_id: 9, // Assuming 9 is the default activity ID
         },
@@ -156,6 +157,7 @@ export async function trackTaskCommand(
         issueID,
         hours,
         comment,
+        daysAgo,
         redmineAuth,
         redmineUrl,
       });
