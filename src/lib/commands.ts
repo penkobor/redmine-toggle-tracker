@@ -287,3 +287,39 @@ export async function deleteEntryCommand(
     process.exit(1);
   }
 }
+
+// Function to handle 'print-monthly-summary' command
+export async function printMonthlySummaryCommand(
+  redmineAuth: { username: string; password: string }
+) {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = today.getMonth();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  for (let day = 1; day <= today.getDate(); day++) {
+    const date = new Date(year, month, day);
+    const dateString = date.toISOString().split("T")[0];
+    const dayName = date.toLocaleDateString("en-US", { weekday: "long" });
+
+    try {
+      const entries = await fetchUserTimeEntries(redmineAuth, dateString);
+
+      let totalHours = 0;
+      entries.forEach((entry) => {
+        totalHours += entry.hours;
+      });
+
+      console.log(`${dateString} (${dayName}): ${totalHours}h`);
+      if (totalHours < 7.5) {
+        console.log("NOT FULLY TRACKED DAY");
+      }
+    } catch (error: any) {
+      console.error("❌ Error fetching time entries:", error.message);
+      console.error("🔍 Error details:", {
+        dateString,
+        redmineAuth,
+      });
+    }
+  }
+}

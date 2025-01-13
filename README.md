@@ -169,6 +169,20 @@ Example:
 redmine delete 1
 ```
 
+### `print-monthly-summary`
+
+Prints all days till today in this month, along with the day name and amount of hours tracked for that day. If the amount of hours is less than 7.5, it also prints "NOT FULLY TRACKED DAY".
+
+```sh
+redmine print-monthly-summary
+```
+
+Example:
+
+```sh
+redmine print-monthly-summary
+```
+
 ## 🏷️ Tags and Their Purpose
 
 The project uses specific tags in Toggl descriptions to map activities to Redmine activity IDs. Here are the tags and their purposes:

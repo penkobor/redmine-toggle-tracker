@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import path from "path";
 import { validateAndAdjustRedmineUrl } from "./lib/helpers";
 import { trackTaskCommand } from "./lib/commands";
+import { printMonthlySummaryCommand } from "./lib/commands";
 
 dotenv.config({ path: path.join(__dirname, "..", ".env") });
 
@@ -103,6 +104,10 @@ import {
       case "delete":
         const daysAgoDelete = arg1 ? parseInt(arg1) : 0;
         await deleteEntryCommand(daysAgoDelete, redmineAuth);
+        break;
+
+      case "print-monthly-summary":
+        await printMonthlySummaryCommand(redmineAuth);
         break;
 
       default:
