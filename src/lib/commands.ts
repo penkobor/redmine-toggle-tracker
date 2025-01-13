@@ -20,6 +20,7 @@ export async function showHelp() {
       ⏱️  track <issueID> <hours> <comment> <daysAgo> - Track hours directly to a task in Redmine
       📅 get-entries <daysAgo> - Fetch and print your tracked time entries in Redmine
       ❌ delete <daysAgo> - Delete a time entry for a specific day
+      📅 print-monthly-summary - Print a summary of your tracked hours for the current
 
     ⚙️  Options:
       -h, --help  Show help
@@ -285,5 +286,54 @@ export async function deleteEntryCommand(
       redmineAuth,
     });
     process.exit(1);
+  }
+}
+
+// Function to handle 'print-monthly-summary' command
+export async function printMonthlySummaryCommand(redmineAuth: {
+  username: string;
+  password: string;
+}) {
+  const today = new Date();
+  const year = today.getFullYear();
+  const month = today.getMonth();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  for (let day = 1; day <= today.getDate(); day++) {
+    // Adjust day to fix offset
+    const date = new Date(year, month, day);
+
+    const dayName = date.toLocaleDateString("en-US", { weekday: "long" });
+    date.setDate(date.getDate() + 1);
+    const dateString = date.toISOString().split("T")[0];
+
+    try {
+      const entries = await fetchUserTimeEntries(redmineAuth, dateString);
+
+      let totalHours = 0;
+      entries.forEach((entry) => {
+        totalHours += entry.hours;
+      });
+
+      console.log(
+        `${dateString} ${`(${dayName}):`.padEnd(15)} ${Math.round(
+          totalHours
+        )}h. ${(() => {
+          if (
+            dayName.toLowerCase() === "saturday" ||
+            dayName.toLowerCase() === "sunday"
+          ) {
+            return "💤";
+          }
+          return totalHours >= 7.5 ? "✔️" : "⚠️";
+        })()}`
+      );
+    } catch (error: any) {
+      console.error("❌ Error fetching time entries:", error.message);
+      console.error("🔍 Error details:", {
+        dateString,
+        redmineAuth,
+      });
+    }
   }
 }
