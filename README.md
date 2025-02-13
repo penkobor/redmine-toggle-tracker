@@ -94,7 +94,7 @@ redmine toggle <daysAgo> <totalHours>
 ```
 
 - `<daysAgo>`: The number of days ago to fetch the time entries from Toggl (default is 0).
-- `<totalHours>`: The total number of hours to track in Redmine.
+- `<totalHours>`: The total number of hours to track in Redmine. Default is 8. **If the provided number is 0, the script will track all task times precisely as if entered with `lp` label (see below)**.
 
 Example:
 
@@ -183,22 +183,15 @@ Example:
 redmine print-monthly-summary
 ```
 
-## 🏷️ Tags and Their Purpose
+## 🏷️ Labels and Their Purpose
 
-The project uses specific tags in Toggl descriptions to map activities to Redmine activity IDs. Here are the tags and their purposes:
+The project allows defining labels to map activities to Redmine activity IDs. The label can be applied either as `@label` directly in the description, or as Toggl tag without the `@` prefix. The labels found in the description have higher priority.
 
-- `@lp`: Log Precisely. This tag indicates that the time entry should be logged with precise duration without any adjustments.
-- `@call`: This tag represents a call activity.
-- `@dev`: This tag represents a development activity.
-- `@analysis`: This tag represents an analysis activity.
-- `@test`: This tag represents a testing activity.
+You can define the labels as you wish - longer, shorter, even one letter, as long as it is unique and recognizable for you. The assigned numbers must correspond to the target Redmine Activity Ids.
 
-## 🔄 Flow of Data Between Toggl and Redmine
+_The tool is internally handling one additional label `lp` which does not correspond to Redmine Activity Id. The label indicates that the time entry should be logged with precise duration without any adjustments._
 
-1. **Fetching Toggl Time Entries**: The script fetches time entries from Toggl using the Toggl API. The time entries are filtered based on the specified date range and workspace ID.
-2. **Processing Time Entries**: The fetched time entries are processed to extract relevant information such as issue ID, duration, description, and activity tags.
-3. **Mapping Activities**: The activity tags in the time entries are mapped to Redmine activity IDs using the `ACTIVITIES_MAP` environment variable.
-4. **Tracking Time in Redmine**: The processed time entries are then tracked in Redmine by creating time entries using the Redmine API.
+Example of labels corresponding to SABO Redmine instance activity Ids is following:
 
 ## 🗺️ ACTIVITIES_MAP Environment Variable
 
@@ -206,14 +199,31 @@ The `ACTIVITIES_MAP` environment variable is a JSON string that maps activity ta
 
 ```json
 {
-  "@call": 62,
-  "@dev": 9,
-  "@analysis": 10,
-  "@test": 12
+  "meeting": 62,
+  "development": 9,
+  "analysis": 10,
+  "test": 12
 }
 ```
 
-In this example, the `@call` tag is mapped to Redmine activity ID 62, the `@dev` tag is mapped to Redmine activity ID 9, the `@analysis` tag is mapped to Redmine activity ID 10, and the `@test` tag is mapped to Redmine activity ID 12.
+In this example, the `meeting` label is mapped to Redmine activity ID 62, the `development` label is mapped to Redmine activity ID 9, the `analysis` label is mapped to Redmine activity ID 10, and the `test` tag is mapped to Redmine activity ID 12.
+
+The map must define additional meta-label `_default` where the key is not an activity ID but a key of another existing activity. Example:
+
+```json
+{
+  "_default": "development"
+}
+```
+
+When this tool does not find any known activity label neither in description nor in Toggl tags, it will use the `_default` activity.
+
+## 🔄 Flow of Data Between Toggl and Redmine
+
+1. **Fetching Toggl Time Entries**: The script fetches time entries from Toggl using the Toggl API. The time entries are filtered based on the specified date range and workspace ID.
+2. **Processing Time Entries**: The fetched time entries are processed to extract relevant information such as issue ID, duration, description, and activity tags.
+3. **Mapping Activities**: The activity tags in the time entries are mapped to Redmine activity IDs using the `ACTIVITIES_MAP` environment variable.
+4. **Tracking Time in Redmine**: The processed time entries are then tracked in Redmine by creating time entries using the Redmine API.
 
 ## Detailed Explanation of How the Code Works
 

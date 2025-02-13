@@ -1,11 +1,17 @@
-export function getActivityId(description: string): number {
+export function getActivityId(description: string, tags: string[]): number {
   const mapOfActivities: Record<string, number> = JSON.parse(
     process.env.ACTIVITIES_MAP!
   );
-
-  if (description.includes("@dev")) return mapOfActivities["@dev"];
-  if (description.includes("@test")) return mapOfActivities["@test"];
-  if (description.includes("@call")) return mapOfActivities["@call"];
-  if (description.includes("@analysis")) return mapOfActivities["@analysis"];
-  return mapOfActivities["@dev"];
+  for(const activityLabel of Object.keys(mapOfActivities)) {
+    const activityId = mapOfActivities[activityLabel];
+    if(description.includes(`@${activityLabel}`)) {
+      return activityId;
+    }
+    if(tags.includes(activityLabel)) {
+      return activityId;
+    }
+  }
+  const defaultTag = mapOfActivities['_default'];
+  console.log(`❌ Tag or label not found, will upload with default ${defaultTag}`);
+  return mapOfActivities[defaultTag];
 }

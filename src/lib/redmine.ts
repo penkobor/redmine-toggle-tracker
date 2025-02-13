@@ -7,6 +7,8 @@ interface TogglEntry {
   description: string;
   duration: number;
   start: string;
+  billable: boolean;
+  tags: string[];
 }
 
 interface RedmineEntry {
@@ -202,39 +204,33 @@ async function createTask(
   }
 }
 
+const LOG_PRECISELY = "lp";
+let isEntryLoggedPrecisely: (entry: TogglEntry) => boolean = (entry) => {
+  return entry.description.includes(`@${LOG_PRECISELY}`) || entry.tags.includes(LOG_PRECISELY);
+}
+
 function prepareRedmineEntries(
   togglEntries: TogglEntry[],
-  totalHours: number
+  requiredHoursCap: number
 ): RedmineEntry[] {
-  const LOG_PRECISELY = "@lp";
-  const totalDurationSeconds = togglEntries.reduce(
-    (sum, entry) => sum + entry.duration,
-    0
-  );
-  const totalDurationHours = totalDurationSeconds / 3600;
+  const adjustCoefficient = (requiredHoursCap == 0) ? 1 : (function(): number {
+    const workedDurationSeconds = togglEntries.reduce(
+      (sum, entry) => sum + entry.duration,
+      0
+    );
+    const workedDurationHours = workedDurationSeconds / 3600;
+  
+    const preciseDurationSeconds = togglEntries.filter(isEntryLoggedPrecisely).reduce(
+      (sum, entry) => sum + entry.duration,
+      0
+    );
+    const preciseDurationHours = preciseDurationSeconds / 3600;
+  
+    const adjustableDurationHours = workedDurationHours - preciseDurationHours;
+    return (requiredHoursCap - preciseDurationHours) / adjustableDurationHours || 1;
+  })();
 
-  const preciseEntries = togglEntries.filter((entry) =>
-    entry.description.includes(LOG_PRECISELY)
-  );
-  const preciseDurationSeconds = preciseEntries.reduce(
-    (sum, entry) => sum + entry.duration,
-    0
-  );
-  const preciseDurationHours = preciseDurationSeconds / 3600;
-
-  const adjustableDurationHours = totalDurationHours - preciseDurationHours;
-  const adjustCoefficient =
-    (totalHours - preciseDurationHours) / adjustableDurationHours || 1;
-
-  const redmineEntries: {
-    time_entry: {
-      issue_id: number;
-      hours: number;
-      spent_on: string;
-      comments: string;
-      activity_id: number;
-    };
-  }[] = [];
+  let redmineEntries: RedmineEntry[] = [];
 
   togglEntries.forEach((entry) => {
     const description = entry.description || "";
@@ -244,16 +240,15 @@ function prepareRedmineEntries(
     const issueIdMatch = description.match(/#(\d+)/);
     const issueId = issueIdMatch ? issueIdMatch[1] : null;
 
-    const shouldLogPrecisely = description.includes(LOG_PRECISELY);
     const adjustedDurationHours =
-      (durationSeconds / 3600) * (shouldLogPrecisely ? 1 : adjustCoefficient);
+      (durationSeconds / 3600) * (isEntryLoggedPrecisely(entry) ? 1 : adjustCoefficient);
 
     const comments = description
       .replace(/#[0-9]+/, "")
-      .replace(LOG_PRECISELY, "")
+      .replace(`@${LOG_PRECISELY}`, "")
       .trim();
 
-    const activityId = getActivityId(description);
+    const activityId = getActivityId(description, entry.tags);
 
     if (issueId) {
       redmineEntries.push({
