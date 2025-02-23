@@ -2,14 +2,7 @@ import { fetchJSON, validateAndAdjustRedmineUrl } from "./helpers";
 import { createBasicAuth, RedmineAuth } from "./auth";
 import { getActivityId } from "./activities";
 import { askQuestion } from "./questions";
-
-interface TogglEntry {
-  description: string;
-  duration: number;
-  start: string;
-  billable: boolean;
-  tags: string[];
-}
+import { TogglEntry } from "./toggl";
 
 interface RedmineEntry {
   time_entry: {

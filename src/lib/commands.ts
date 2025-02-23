@@ -89,7 +89,7 @@ export async function trackTimeCommand(props: {
       console.log("\n⏳ Time entries to be tracked in Redmine:\n");
       redmineEntries.forEach((entry) => {
         console.log(
-          `⏱️  Issue #${entry.time_entry.issue_id}: ${entry.time_entry.hours}h ${entry.time_entry.activity_id} ${entry.time_entry.comments}`
+          `⏱️  Issue #${entry.time_entry.issue_id}: ${entry.time_entry.spent_on} ${entry.time_entry.hours}h ${entry.time_entry.activity_id} ${entry.time_entry.comments}`
         );
       });
 
