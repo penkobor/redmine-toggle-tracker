@@ -6,7 +6,7 @@ export const makeQueryFromObject = (obj: {
 }) => {
   return Object.keys(obj)
     .map((key, idx) => {
-      return `${idx === 0 ? "?" : ""}${key}=${obj[key]}`;
+      return `${idx === 0 ? "?" : ""}${key}=${encodeURIComponent(obj[key])}`;
     })
     .join("&");
 };
