@@ -2,7 +2,7 @@ import { fetchJSON, validateAndAdjustRedmineUrl } from "./helpers";
 import { createBasicAuth, RedmineAuth } from "./auth";
 import { getActivityId } from "./activities";
 import { askQuestion } from "./questions";
-import { TogglEntry } from "./toggl";
+import { ModelsTimeEntry } from "../api-toggl";
 
 interface RedmineEntry {
   time_entry: {
@@ -198,23 +198,23 @@ async function createTask(
 }
 
 const LOG_PRECISELY = "lp";
-let isEntryLoggedPrecisely: (entry: TogglEntry) => boolean = (entry) => {
-  return entry.description.includes(`@${LOG_PRECISELY}`) || entry.tags.includes(LOG_PRECISELY);
+let isEntryLoggedPrecisely: (entry: ModelsTimeEntry) => boolean = (entry) => {
+  return entry.description!.includes(`@${LOG_PRECISELY}`) || entry.tags!.includes(LOG_PRECISELY);
 }
 
 function prepareRedmineEntries(
-  togglEntries: TogglEntry[],
+  togglEntries: ModelsTimeEntry[],
   requiredHoursCap: number
 ): RedmineEntry[] {
   const adjustCoefficient = (requiredHoursCap == 0) ? 1 : (function(): number {
     const workedDurationSeconds = togglEntries.reduce(
-      (sum, entry) => sum + entry.duration,
+      (sum, entry) => sum + entry.duration!,
       0
     );
     const workedDurationHours = workedDurationSeconds / 3600;
   
     const preciseDurationSeconds = togglEntries.filter(isEntryLoggedPrecisely).reduce(
-      (sum, entry) => sum + entry.duration,
+      (sum, entry) => sum + entry.duration!,
       0
     );
     const preciseDurationHours = preciseDurationSeconds / 3600;
@@ -227,8 +227,8 @@ function prepareRedmineEntries(
 
   togglEntries.forEach((entry) => {
     const description = entry.description || "";
-    const durationSeconds = entry.duration;
-    const spentOn = entry.start.substring(0, 10);
+    const durationSeconds = entry.duration!;
+    const spentOn = entry.start!.substring(0, 10);
 
     const issueIdMatch = description.match(/#(\d+)/);
     const issueId = issueIdMatch ? issueIdMatch[1] : null;
@@ -241,7 +241,7 @@ function prepareRedmineEntries(
       .replace(`@${LOG_PRECISELY}`, "")
       .trim();
 
-    const activityId = getActivityId(description, entry.tags);
+    const activityId = getActivityId(description, entry.tags!);
 
     if (issueId) {
       redmineEntries.push({

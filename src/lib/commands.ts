@@ -85,7 +85,6 @@ export async function trackTimeCommand(props: {
           Authorization: createBasicAuth(togglAuth)
         }
       });
-      getTimeEntriesxxx
       const togglEntries = await fetchTogglTimeEntries(
         togglClient,
         date,
