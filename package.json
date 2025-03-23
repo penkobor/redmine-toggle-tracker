@@ -8,17 +8,22 @@
     "start": "node dist/index.js",
     "build": "tsc"
   },
+  "engines": {
+    "node": ">=22.10.0"
+  },
   "bin": {
     "redmine": "dist/index.js"
   },
   "author": "nodejs",
   "license": "ISC",
   "dependencies": {
+    "@hey-api/client-fetch": "^0.8.3",
     "@types/node": "^22.9.1",
     "dotenv": "^16.4.5",
     "express": "^4.17.1"
   },
   "devDependencies": {
+    "@hey-api/openapi-ts": "^0.64.12",
     "typescript": "^5.0.0"
   }
 }

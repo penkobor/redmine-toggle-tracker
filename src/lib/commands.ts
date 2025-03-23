@@ -9,6 +9,8 @@ import {
   deleteTimeEntry,
 } from "./redmine";
 import { fetchTogglTimeEntries } from "./toggl";
+import { client as togglClient } from "../api-toggl/client.gen";
+import { createBasicAuth } from "./auth";
 
 // Function to show help information
 export async function showHelp() {
@@ -77,9 +79,15 @@ export async function trackTimeCommand(props: {
   );
   if (trackConfirmation.trim().toLowerCase() === "yes") {
     try {
+      togglClient.setConfig({
+        baseUrl: togglUrl,
+        headers: {
+          Authorization: createBasicAuth(togglAuth)
+        }
+      });
+      getTimeEntriesxxx
       const togglEntries = await fetchTogglTimeEntries(
-        togglAuth,
-        togglUrl,
+        togglClient,
         date,
         togglWorkspaceId
       );

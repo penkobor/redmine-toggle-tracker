@@ -1,5 +1,7 @@
-import { createBasicAuth } from "./auth";
+import { Client } from "@hey-api/client-fetch";
+import { getTimeEntries, GetTimeEntriesResponses } from "../api-toggl";
 import { fetchJSON, makeQueryFromObject } from "./helpers";
+import { GetTimeEntriesResponse } from "../api-redmine/types.gen";
 
 export interface TogglEntry {
   description: string;
@@ -10,8 +12,7 @@ export interface TogglEntry {
 }
 
 export async function fetchTogglTimeEntries(
-  togglAuth: { username: string; password: string },
-  togglUrl: string,
+  client: Client,
   date: string,
   togglWorkspaceId: string
 ) {
@@ -31,12 +32,11 @@ export async function fetchTogglTimeEntries(
 
   const url = `${togglUrl}${makeQueryFromObject(params)}`;
   try {
-    const response = await fetchJSON(url, {
-      headers: {
-        Authorization: createBasicAuth(togglAuth),
-      },
+    const { response, error } = await getTimeEntries({
+
+
     });
-    return (response as TogglEntry[]).map((entry) => ({
+    return (response as GetTimeEntriesResponses[200]).map((entry) => ({
       ...entry,
       start: new Date(new Date(entry.start).getTime() + localMachineTZOffsetMinutes * 60 * 1000).toISOString(),
     }));
@@ -45,9 +45,7 @@ export async function fetchTogglTimeEntries(
     console.error("🔍 Error details:", {
       url,
       params,
-      headers: {
-        Authorization: createBasicAuth(togglAuth),
-      },
+      headers: client.getConfig().headers,
     });
     process.exit(1);
   }
