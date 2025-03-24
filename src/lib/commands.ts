@@ -9,8 +9,7 @@ import {
   deleteTimeEntry,
 } from "./redmine";
 import { fetchTogglTimeEntries } from "./toggl";
-import { client as togglClient } from "../api-toggl/client.gen";
-import { createBasicAuth } from "./auth";
+import { Client } from "@hey-api/client-fetch";
 
 // Function to show help information
 export async function showHelp() {
@@ -31,9 +30,9 @@ export async function showHelp() {
 
 // Function to handle 'create-task' command
 export async function createTaskCommand(
+  redmineClient: Client,
   taskName: string,
-  projectName: string,
-  redmineAuth: { username: string; password: string }
+  projectName: string
 ) {
   if (!taskName) {
     console.log("❌ Error: Task name is missing. Please provide a task name.");
@@ -41,13 +40,13 @@ export async function createTaskCommand(
   }
 
   try {
-    await createRedmineTask(taskName, projectName, redmineAuth);
+    await createRedmineTask(redmineClient, taskName, projectName);
   } catch (error: any) {
     console.error("❌ Error creating task:", error.message);
     console.error("🔍 Error details:", {
       taskName,
       projectName,
-      redmineAuth,
+      redmineClient,
     });
     process.exit(1);
   }
@@ -55,22 +54,18 @@ export async function createTaskCommand(
 
 // Function to handle 'toggle' command
 export async function trackTimeCommand(props: {
+  redmineClient: Client,
+  togglClient: Client,
   daysAgo: number;
   totalHours: number;
-  redmineAuth: { username: string; password: string };
-  redmineUrl: string;
-  togglAuth: { username: string; password: string };
-  togglUrl: string;
   togglWorkspaceId: string;
 }) {
   const {
+    redmineClient,
+    togglClient,
     daysAgo,
     totalHours,
-    redmineAuth,
-    redmineUrl,
-    togglAuth,
-    togglUrl,
-    togglWorkspaceId,
+    togglWorkspaceId
   } = props;
   const date = getDateString(daysAgo);
 
@@ -79,12 +74,6 @@ export async function trackTimeCommand(props: {
   );
   if (trackConfirmation.trim().toLowerCase() === "yes") {
     try {
-      togglClient.setConfig({
-        baseUrl: togglUrl,
-        headers: {
-          Authorization: createBasicAuth(togglAuth)
-        }
-      });
       const togglEntries = await fetchTogglTimeEntries(
         togglClient,
         date,
@@ -105,7 +94,7 @@ export async function trackTimeCommand(props: {
       );
 
       if (proceed.trim().toLowerCase() === "yes") {
-        await trackTimeInRedmine(redmineEntries, redmineAuth, redmineUrl);
+        await trackTimeInRedmine(redmineClient, redmineEntries);
         console.log("✅ Time tracked successfully.");
       } else {
         console.log("🚫 Time tracking aborted.");
@@ -115,10 +104,8 @@ export async function trackTimeCommand(props: {
       console.error("🔍 Error details:", {
         daysAgo,
         totalHours,
-        redmineAuth,
-        redmineUrl,
-        togglAuth,
-        togglUrl,
+        redmineClient,
+        togglClient,
         togglWorkspaceId,
       });
       process.exit(1);
@@ -130,12 +117,11 @@ export async function trackTimeCommand(props: {
 
 // Function to handle 'track' command
 export async function trackTaskCommand(
+  redmineClient: Client,
   issueID: string,
   hours: number,
   comment: string,
-  daysAgo: number,
-  redmineAuth: { username: string; password: string },
-  redmineUrl: string
+  daysAgo: number
 ) {
   if (!issueID || !hours) {
     console.log("❌ Error: Issue ID and hours are required.");
@@ -157,7 +143,7 @@ export async function trackTaskCommand(
         },
       };
 
-      await trackTimeInRedmine([redmineEntry], redmineAuth, redmineUrl);
+      await trackTimeInRedmine(redmineClient, [redmineEntry]);
       console.log("✅ Time tracked successfully.");
     } catch (error: any) {
       console.error("❌ Error tracking time:", error.message);
@@ -166,8 +152,7 @@ export async function trackTaskCommand(
         hours,
         comment,
         daysAgo,
-        redmineAuth,
-        redmineUrl,
+        redmineClient
       });
       process.exit(1);
     }
@@ -178,8 +163,8 @@ export async function trackTaskCommand(
 
 // Function to handle 'search' command
 export async function searchCommand(
-  searchQuery: string,
-  redmineAuth: { username: string; password: string }
+  redmineClient: Client,
+  searchQuery: string
 ) {
   if (!searchQuery) {
     console.log(
@@ -191,7 +176,7 @@ export async function searchCommand(
   console.log(`🔎 Searching for issues with query: "${searchQuery}"`);
 
   try {
-    const issues = await searchIssues(searchQuery, redmineAuth);
+    const issues = await searchIssues(redmineClient, searchQuery);
 
     if (issues.length > 0) {
       console.log("✅ Issues found:");
@@ -205,7 +190,7 @@ export async function searchCommand(
     console.error("❌ Error searching issues:", error.message);
     console.error("🔍 Error details:", {
       searchQuery,
-      redmineAuth,
+      redmineClient
     });
     process.exit(1);
   }
@@ -213,20 +198,20 @@ export async function searchCommand(
 
 // Function to handle 'get-entries' command
 export async function getEntriesCommand(
+  redmineClient: Client,
   daysAgo: number,
-  redmineAuth: { username: string; password: string }
 ) {
   const date = getDateString(daysAgo);
 
   try {
-    const entries = await fetchUserTimeEntries(redmineAuth, date);
+    const entries = await fetchUserTimeEntries(redmineClient, date);
 
     if (entries.length > 0) {
       console.log(`✅ Time entries for ${date}:`);
       let totalHours = 0;
       entries.forEach((entry) => {
         console.log(
-          `- Issue #${entry.issue.id}: ${entry.hours}h - ${entry.comments}`
+          `- Issue #${entry.issue!.id}: ${entry.hours}h - ${entry.comments}`
         );
         totalHours += entry.hours;
       });
@@ -238,7 +223,7 @@ export async function getEntriesCommand(
     console.error("❌ Error fetching time entries:", error.message);
     console.error("🔍 Error details:", {
       daysAgo,
-      redmineAuth,
+      redmineClient,
     });
     process.exit(1);
   }
@@ -246,13 +231,13 @@ export async function getEntriesCommand(
 
 // Function to handle 'delete' command
 export async function deleteEntryCommand(
-  daysAgo: number,
-  redmineAuth: { username: string; password: string }
+  redmineClient: Client,
+  daysAgo: number
 ) {
   const date = getDateString(daysAgo);
 
   try {
-    const entries = await fetchUserTimeEntries(redmineAuth, date);
+    const entries = await fetchUserTimeEntries(redmineClient, date);
 
     if (entries.length > 0) {
       console.log(`✅ Time entries for ${date}:`);
@@ -278,7 +263,7 @@ export async function deleteEntryCommand(
       );
 
       if (deleteConfirmation.trim().toLowerCase() === "yes") {
-        await deleteTimeEntry(entryIdToDelete, redmineAuth);
+        await deleteTimeEntry(redmineClient, entryIdToDelete);
         console.log("✅ Time entry deleted successfully.");
       } else {
         console.log("🚫 Deletion aborted.");
@@ -290,17 +275,14 @@ export async function deleteEntryCommand(
     console.error("❌ Error deleting time entry:", error.message);
     console.error("🔍 Error details:", {
       daysAgo,
-      redmineAuth,
+      redmineClient
     });
     process.exit(1);
   }
 }
 
 // Function to handle 'print-monthly-summary' command
-export async function printMonthlySummaryCommand(redmineAuth: {
-  username: string;
-  password: string;
-}) {
+export async function printMonthlySummaryCommand(redmineClient: Client) {
   const today = new Date();
   const year = today.getFullYear();
   const month = today.getMonth();
@@ -315,7 +297,7 @@ export async function printMonthlySummaryCommand(redmineAuth: {
     const dateString = date.toISOString().split("T")[0];
 
     try {
-      const entries = await fetchUserTimeEntries(redmineAuth, dateString);
+      const entries = await fetchUserTimeEntries(redmineClient, dateString);
 
       let totalHours = 0;
       entries.forEach((entry) => {
@@ -339,7 +321,7 @@ export async function printMonthlySummaryCommand(redmineAuth: {
       console.error("❌ Error fetching time entries:", error.message);
       console.error("🔍 Error details:", {
         dateString,
-        redmineAuth,
+        redmineClient,
       });
     }
   }

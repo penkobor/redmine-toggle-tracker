@@ -4,6 +4,8 @@ import path from "path";
 import { validateAndAdjustRedmineUrl } from "./lib/helpers";
 import { trackTaskCommand } from "./lib/commands";
 import { printMonthlySummaryCommand } from "./lib/commands";
+import { client as redmineClient } from "./api-redmine/client.gen";
+import { client as togglClient } from "./api-toggl/client.gen";
 
 dotenv.config({ path: path.join(__dirname, "..", ".env") });
 
@@ -15,6 +17,7 @@ import {
   getEntriesCommand,
   deleteEntryCommand,
 } from "./lib/commands";
+import { createBasicAuth } from "./lib/auth";
 
 (async function main() {
   try {
@@ -28,11 +31,25 @@ import {
       process.env.REDMINE_API_URL!
     );
 
+    redmineClient.setConfig({
+      baseUrl: redmineUrl,
+      headers: {
+        Authorization: createBasicAuth(redmineAuth)
+      }
+    });
+
     const togglAuth = {
       username: process.env.TOGGL_API_TOKEN!,
       password: "api_token",
     };
     const togglUrl = process.env.TOGGL_API_URL!;
+
+    togglClient.setConfig({
+      baseUrl: togglUrl,
+      headers: {
+        Authorization: createBasicAuth(redmineAuth)
+      }
+    });
 
     const togglWorkspaceId = process.env.TOGGL_WORKSPACE_ID!;
     const defaultProjectId = process.env.DEFAULT_PROJECT!;
@@ -59,20 +76,17 @@ import {
       case "create-task":
         const taskName = arg1;
         const projectName = arg2 ?? defaultProjectId;
-        await createTaskCommand(taskName, projectName, redmineAuth);
+        await createTaskCommand(redmineClient, taskName, projectName);
         break;
 
       case "toggle":
         const daysAgo = arg1 ? parseInt(arg1) : 0;
         const totalHours = arg2 ? parseFloat(arg2) : 8;
         await trackTimeCommand({
+          redmineClient, togglClient,
           daysAgo,
           totalHours,
-          redmineAuth,
-          redmineUrl,
-          togglAuth,
-          togglUrl,
-          togglWorkspaceId,
+          togglWorkspaceId
         });
         break;
 
@@ -82,32 +96,31 @@ import {
         const comment = arg3 ?? "";
         const daysAgoTrack = arg4 ? parseInt(arg4) : 0;
         await trackTaskCommand(
+          redmineClient,
           issueID,
           hours,
           comment,
-          daysAgoTrack,
-          redmineAuth,
-          redmineUrl
+          daysAgoTrack
         );
         break;
 
       case "search":
         const searchQuery = arg1;
-        await searchCommand(searchQuery, redmineAuth);
+        await searchCommand(redmineClient, searchQuery);
         break;
 
       case "get-entries":
         const daysAgoEntries = arg1 ? parseInt(arg1) : 0;
-        await getEntriesCommand(daysAgoEntries, redmineAuth);
+        await getEntriesCommand(redmineClient, daysAgoEntries);
         break;
 
       case "delete":
         const daysAgoDelete = arg1 ? parseInt(arg1) : 0;
-        await deleteEntryCommand(daysAgoDelete, redmineAuth);
+        await deleteEntryCommand(redmineClient, daysAgoDelete);
         break;
 
       case "print-monthly-summary":
-        await printMonthlySummaryCommand(redmineAuth);
+        await printMonthlySummaryCommand(redmineClient);
         break;
 
       default:
