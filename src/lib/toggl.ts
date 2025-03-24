@@ -7,8 +7,6 @@ export async function fetchTogglTimeEntries(
   togglWorkspaceId: string
 ): Promise<ModelsTimeEntry[]> {
 
-
-
   // #TODO: get the account's desired TZ offset from Toggl API, not from local machine. It will be most probably equal, but not guaranteed.
   // Date.getTimezoneOffset is weird, giving negative values for "ahead" timezones (e.g. UTC+1 = -60) and vice versa
   // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/getTimezoneOffset#negative_values_and_positive_values

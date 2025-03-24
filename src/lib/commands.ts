@@ -10,6 +10,7 @@ import {
 } from "./redmine";
 import { fetchTogglTimeEntries } from "./toggl";
 import { Client } from "@hey-api/client-fetch";
+import { Search } from "../api-redmine";
 
 // Function to show help information
 export async function showHelp() {
@@ -176,12 +177,12 @@ export async function searchCommand(
   console.log(`🔎 Searching for issues with query: "${searchQuery}"`);
 
   try {
-    const issues = await searchIssues(redmineClient, searchQuery);
+    const issues: Search[] = await searchIssues(redmineClient, searchQuery);
 
     if (issues.length > 0) {
       console.log("✅ Issues found:");
       issues.forEach((issue) => {
-        console.log(`- #${issue.id}: ${issue.subject}`);
+        console.log(`- #${issue.id}: ${issue.title}`);
       });
     } else {
       console.log("No issues found.");
@@ -243,7 +244,7 @@ export async function deleteEntryCommand(
       console.log(`✅ Time entries for ${date}:`);
       entries.forEach((entry) => {
         console.log(
-          `- ID: ${entry.id}, Issue #${entry.issue.id}: ${entry.hours}h - ${entry.comments}`
+          `- ID: ${entry.id}, Issue #${entry.issue!.id}: ${entry.hours}h - ${entry.comments}`
         );
       });
 

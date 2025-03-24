@@ -47,7 +47,7 @@ import { createBasicAuth } from "./lib/auth";
     togglClient.setConfig({
       baseUrl: togglUrl,
       headers: {
-        Authorization: createBasicAuth(redmineAuth)
+        Authorization: createBasicAuth(togglAuth)
       }
     });
 
