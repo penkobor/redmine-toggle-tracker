@@ -1,6 +1,5 @@
 #!/usr/bin/env node
 import dotenv from "dotenv";
-import path from "path";
 import { validateAndAdjustRedmineUrl } from "./lib/helpers.js";
 import {
   trackTaskCommand,
@@ -12,12 +11,16 @@ import {
   deleteEntryCommand,
   trackTimeCommand,
 } from "./lib/commands.js";
-import {} from "./lib/commands.js";
-import React, { useState, useEffect, JSX } from "react";
+import React, { JSX } from "react";
 import { render, Text } from "ink";
 import { Help } from "./components/Help.js";
+import { Entries } from "./components/Entries.js";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { EntriesProps } from "./components/types.js";
+import { Search } from "./components/Search.js";
+import { togglAuth } from "./constants.js";
 
-dotenv.config({ path: path.join(import.meta.url, "..", ".env") });
+dotenv.config();
 
 async function main() {
   const [command, arg1, arg2, arg3, arg4] = process.argv.slice(2);
@@ -31,10 +34,6 @@ async function main() {
       process.env.REDMINE_API_URL!
     );
 
-    const togglAuth = {
-      username: process.env.TOGGL_API_TOKEN!,
-      password: "api_token",
-    };
     const togglUrl = process.env.TOGGL_API_URL!;
 
     const togglWorkspaceId = process.env.TOGGL_WORKSPACE_ID!;
@@ -134,18 +133,34 @@ async function main() {
   }
 }
 
-const OutputMap: Record<string, () => JSX.Element> = {
+const OutputMap: Record<string, (props: EntriesProps) => JSX.Element> = {
   "--help": Help,
   "-h": Help,
+  "get-entries": Entries,
+  search: Search,
 };
 
 const App = () => {
-  const [command, arg1, arg2, arg3, arg4] = process.argv.slice(2);
+  const [command, ...args] = process.argv.slice(2);
 
   const Component =
     OutputMap[command as any] || (() => <Text>Invalid command</Text>);
 
-  return <Component />;
+  return <Component args={args} />;
 };
 
-render(<App />);
+// Create a client
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 3,
+      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Optional: exponential backoff
+    },
+  },
+});
+
+render(
+  <QueryClientProvider client={queryClient}>
+    <App />
+  </QueryClientProvider>
+);

@@ -15,6 +15,7 @@
   "author": "nodejs",
   "license": "ISC",
   "dependencies": {
+    "@tanstack/react-query": "^5.69.0",
     "@types/node": "^22.9.1",
     "dotenv": "^16.4.5",
     "express": "^4.17.1",
