@@ -1,8 +1,8 @@
-import { fetchJSON, validateAndAdjustRedmineUrl } from "./helpers";
-import { createBasicAuth, RedmineAuth } from "./auth";
-import { getActivityId } from "./activities";
-import { askQuestion } from "./questions";
-import { TogglEntry } from "./toggl";
+import { fetchJSON, validateAndAdjustRedmineUrl } from "./helpers.js";
+import { createBasicAuth, RedmineAuth } from "./auth.js";
+import { getActivityId } from "./activities.js";
+import { askQuestion } from "./questions.js";
+import { TogglEntry } from "./toggl.js";
 
 interface RedmineEntry {
   time_entry: {
@@ -199,29 +199,38 @@ async function createTask(
 
 const LOG_PRECISELY = "lp";
 let isEntryLoggedPrecisely: (entry: TogglEntry) => boolean = (entry) => {
-  return entry.description.includes(`@${LOG_PRECISELY}`) || entry.tags.includes(LOG_PRECISELY);
-}
+  return (
+    entry.description.includes(`@${LOG_PRECISELY}`) ||
+    entry.tags.includes(LOG_PRECISELY)
+  );
+};
 
 function prepareRedmineEntries(
   togglEntries: TogglEntry[],
   requiredHoursCap: number
 ): RedmineEntry[] {
-  const adjustCoefficient = (requiredHoursCap == 0) ? 1 : (function(): number {
-    const workedDurationSeconds = togglEntries.reduce(
-      (sum, entry) => sum + entry.duration,
-      0
-    );
-    const workedDurationHours = workedDurationSeconds / 3600;
-  
-    const preciseDurationSeconds = togglEntries.filter(isEntryLoggedPrecisely).reduce(
-      (sum, entry) => sum + entry.duration,
-      0
-    );
-    const preciseDurationHours = preciseDurationSeconds / 3600;
-  
-    const adjustableDurationHours = workedDurationHours - preciseDurationHours;
-    return (requiredHoursCap - preciseDurationHours) / adjustableDurationHours || 1;
-  })();
+  const adjustCoefficient =
+    requiredHoursCap == 0
+      ? 1
+      : (function (): number {
+          const workedDurationSeconds = togglEntries.reduce(
+            (sum, entry) => sum + entry.duration,
+            0
+          );
+          const workedDurationHours = workedDurationSeconds / 3600;
+
+          const preciseDurationSeconds = togglEntries
+            .filter(isEntryLoggedPrecisely)
+            .reduce((sum, entry) => sum + entry.duration, 0);
+          const preciseDurationHours = preciseDurationSeconds / 3600;
+
+          const adjustableDurationHours =
+            workedDurationHours - preciseDurationHours;
+          return (
+            (requiredHoursCap - preciseDurationHours) /
+              adjustableDurationHours || 1
+          );
+        })();
 
   let redmineEntries: RedmineEntry[] = [];
 
@@ -234,7 +243,8 @@ function prepareRedmineEntries(
     const issueId = issueIdMatch ? issueIdMatch[1] : null;
 
     const adjustedDurationHours =
-      (durationSeconds / 3600) * (isEntryLoggedPrecisely(entry) ? 1 : adjustCoefficient);
+      (durationSeconds / 3600) *
+      (isEntryLoggedPrecisely(entry) ? 1 : adjustCoefficient);
 
     const comments = description
       .replace(/#[0-9]+/, "")
@@ -300,9 +310,7 @@ async function searchIssues(
 ): Promise<any[]> {
   const encodedQuery = encodeURIComponent(searchQuery);
   const url =
-    `${validateAndAdjustRedmineUrl(
-      process.env.REDMINE_API_URL!
-    )}issues.json?` +
+    `${validateAndAdjustRedmineUrl(process.env.REDMINE_API_URL!)}issues.json?` +
     `offset=0&limit=20&` +
     `f[]=subject&op[subject]=~&v[subject][]=${encodedQuery}` +
     `&sort=updated_on:desc`;
@@ -333,8 +341,7 @@ async function fetchUserTimeEntries(
   const url =
     `${validateAndAdjustRedmineUrl(
       process.env.REDMINE_API_URL!
-    )}time_entries.json?` +
-    `user_id=me&spent_on=${date}`;
+    )}time_entries.json?` + `user_id=me&spent_on=${date}`;
 
   try {
     const response = await fetchJSON(url, {

@@ -1,5 +1,5 @@
-import { askQuestion } from "./questions";
-import { getDateString } from "./helpers";
+import { askQuestion } from "./questions.js";
+import { getDateString } from "./helpers.js";
 import {
   createTask as createRedmineTask,
   prepareRedmineEntries,
@@ -7,8 +7,8 @@ import {
   trackTimeInRedmine,
   fetchUserTimeEntries,
   deleteTimeEntry,
-} from "./redmine";
-import { fetchTogglTimeEntries } from "./toggl";
+} from "./redmine.js";
+import { fetchTogglTimeEntries } from "./toggl.js";
 
 // Function to show help information
 export async function showHelp() {

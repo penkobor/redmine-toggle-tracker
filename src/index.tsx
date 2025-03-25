@@ -1,25 +1,28 @@
 #!/usr/bin/env node
 import dotenv from "dotenv";
 import path from "path";
-import { validateAndAdjustRedmineUrl } from "./lib/helpers";
-import { trackTaskCommand } from "./lib/commands";
-import { printMonthlySummaryCommand } from "./lib/commands";
-
-dotenv.config({ path: path.join(__dirname, "..", ".env") });
-
+import { validateAndAdjustRedmineUrl } from "./lib/helpers.js";
 import {
-  showHelp,
+  trackTaskCommand,
+  printMonthlySummaryCommand,
   createTaskCommand,
-  trackTimeCommand,
+  showHelp,
   searchCommand,
   getEntriesCommand,
   deleteEntryCommand,
-} from "./lib/commands";
+  trackTimeCommand,
+} from "./lib/commands.js";
+import {} from "./lib/commands.js";
+import React, { useState, useEffect, JSX } from "react";
+import { render, Text } from "ink";
+import { Help } from "./components/Help.js";
 
-(async function main() {
+dotenv.config({ path: path.join(import.meta.url, "..", ".env") });
+
+async function main() {
+  const [command, arg1, arg2, arg3, arg4] = process.argv.slice(2);
+
   try {
-    const [command, arg1, arg2, arg3, arg4] = process.argv.slice(2);
-
     const redmineAuth = {
       username: process.env.REDMINE_TOKEN!,
       password: "pass",
@@ -129,4 +132,20 @@ import {
     });
     process.exit(1);
   }
-})();
+}
+
+const OutputMap: Record<string, () => JSX.Element> = {
+  "--help": Help,
+  "-h": Help,
+};
+
+const App = () => {
+  const [command, arg1, arg2, arg3, arg4] = process.argv.slice(2);
+
+  const Component =
+    OutputMap[command as any] || (() => <Text>Invalid command</Text>);
+
+  return <Component />;
+};
+
+render(<App />);
