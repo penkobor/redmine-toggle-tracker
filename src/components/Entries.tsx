@@ -4,9 +4,9 @@ import { fetchUserTimeEntries } from "../lib/redmine.js";
 import { Box, Text } from "ink";
 import { useQuery } from "@tanstack/react-query";
 import { redmineAuth } from "../constants.js";
-import { EntriesProps } from "./types.js";
+import { CommandsProps } from "./types.js";
 
-export const Entries = ({ args }: EntriesProps) => {
+export const Entries = ({ args }: CommandsProps) => {
   const [arg1] = args ?? [];
   const daysAgo = arg1 ? parseInt(arg1) : 0;
   const date = getDateString(daysAgo);

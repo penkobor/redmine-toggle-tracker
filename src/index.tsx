@@ -11,14 +11,15 @@ import {
   deleteEntryCommand,
   trackTimeCommand,
 } from "./lib/commands.js";
-import React, { JSX } from "react";
+import React, { JSX, useEffect, useState } from "react";
 import { render, Text } from "ink";
 import { Help } from "./components/Help.js";
 import { Entries } from "./components/Entries.js";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { EntriesProps } from "./components/types.js";
+import { CommandsProps } from "./components/types.js";
 import { Search } from "./components/Search.js";
 import { togglAuth } from "./constants.js";
+import { Toggle } from "./components/Toggle.js";
 
 dotenv.config();
 
@@ -133,11 +134,12 @@ async function main() {
   }
 }
 
-const OutputMap: Record<string, (props: EntriesProps) => JSX.Element> = {
+const OutputMap: Record<string, (props: CommandsProps) => JSX.Element> = {
   "--help": Help,
   "-h": Help,
   "get-entries": Entries,
   search: Search,
+  toggle: Toggle,
 };
 
 const App = () => {

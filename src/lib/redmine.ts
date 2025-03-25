@@ -278,7 +278,7 @@ async function trackTimeInRedmine(
 
   for (const entry of redmineEntries) {
     try {
-      const response = await fetchJSON(redmineTimeEntriesUrl, {
+      await fetchJSON(redmineTimeEntriesUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -286,9 +286,6 @@ async function trackTimeInRedmine(
         },
         body: JSON.stringify(entry),
       });
-      console.log(
-        `#${entry.time_entry.issue_id}: ${entry.time_entry.hours}h tracked in Redmine.`
-      );
     } catch (error) {
       console.error(
         `Failed to track time for issue #${entry.time_entry.issue_id}:`,

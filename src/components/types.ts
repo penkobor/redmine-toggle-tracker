@@ -1,3 +1,3 @@
-export type EntriesProps = {
+export type CommandsProps = {
   args?: string[];
 };

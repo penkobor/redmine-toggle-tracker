@@ -1,5 +1,5 @@
 import React from "react";
-import { EntriesProps } from "./types.js";
+import { CommandsProps } from "./types.js";
 import { Box, Text } from "ink";
 import { useQuery } from "@tanstack/react-query";
 import { redmineAuth } from "../constants.js";
@@ -26,7 +26,7 @@ const SearchInternal = ({ searchQuery }: { searchQuery: string }) => {
   );
 };
 
-export const Search = ({ args }: EntriesProps) => {
+export const Search = ({ args }: CommandsProps) => {
   const [searchQuery] = args ?? [];
   if (!searchQuery) {
     return <Text>Please provide a search query.</Text>;
