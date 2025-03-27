@@ -1,14 +1,14 @@
 import React, { useState } from "react";
 import { CommandsProps } from "./types.js";
 import { getDateString, validateAndAdjustRedmineUrl } from "../lib/helpers.js";
-import { Box, Text, useInput } from "ink";
+import { Box, Text, useApp, useInput } from "ink";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { fetchTogglTimeEntries } from "../lib/toggl.js";
 import { redmineAuth, togglAuth } from "../constants.js";
 import { prepareRedmineEntries, trackTimeInRedmine } from "../lib/redmine.js";
+import { ConfirmInput } from "./ConfirmInput.js";
 
 const togglUrl = process.env.TOGGL_API_URL!;
-
 const togglWorkspaceId = process.env.TOGGL_WORKSPACE_ID!;
 const redmineUrl = validateAndAdjustRedmineUrl(process.env.REDMINE_API_URL!);
 
@@ -17,6 +17,7 @@ export const Toggle = ({ args }: CommandsProps) => {
   const daysAgo = arg1 ? parseInt(arg1) : 0;
   const totalHours = arg2 ? parseFloat(arg2) : 8;
   const date = getDateString(daysAgo);
+  const { exit } = useApp();
   const [shouldTrack, setShouldTrack] = useState(false);
   const [shouldTrackRedmine, setShouldTrackRedmine] = useState(false);
 
@@ -36,30 +37,28 @@ export const Toggle = ({ args }: CommandsProps) => {
     enabled: shouldTrack,
   });
 
-  const { mutate, isSuccess } = useMutation({
+  const { mutate, isSuccess, isPending } = useMutation({
     mutationKey: ["track", date],
     mutationFn: async () => {
       await trackTimeInRedmine(entries, redmineAuth, redmineUrl);
     },
-  });
-
-  useInput((input) => {
-    if (input === "y") {
-      if (!shouldTrack) {
-        setShouldTrack(true);
-      }
-      if (!shouldTrackRedmine && shouldTrack) {
-        setShouldTrackRedmine(true);
-        mutate();
-      }
-    }
+    onSuccess: () => {
+      exit();
+    },
   });
 
   if (!shouldTrack) {
     return (
-      <Text>
-        Track {totalHours} hours for date "{date}"? (y/n)
-      </Text>
+      <Box>
+        <Text>
+          Track {totalHours} hours for date "{date}"? (y/n)
+        </Text>
+        <ConfirmInput
+          onPress={(checked) => {
+            setShouldTrack(checked);
+          }}
+        />
+      </Box>
     );
   }
 
@@ -81,14 +80,23 @@ export const Toggle = ({ args }: CommandsProps) => {
         );
       })}
       {!shouldTrackRedmine && (
-        <Text>
-          Do you want to proceed with tracking these time entries in Redmine?
-          (y/n)
-        </Text>
+        <Box flexDirection="column">
+          <Text>
+            Do you want to proceed with tracking these time entries in Redmine?
+            (y/n)
+          </Text>
+          <ConfirmInput
+            onPress={(checked) => {
+              if (checked) {
+                setShouldTrackRedmine(checked);
+                mutate();
+              }
+            }}
+          />
+        </Box>
       )}
-      {shouldTrackRedmine && isSuccess && (
-        <Text>Time entries tracked successfully!</Text>
-      )}
+      {isPending && <Text>Tracking time entries...</Text>}
+      {isSuccess && <Text>Time entries tracked successfully!</Text>}
     </Box>
   );
 };
