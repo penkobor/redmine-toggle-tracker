@@ -6,7 +6,6 @@ import { deleteTimeEntry, fetchUserTimeEntries } from "../lib/redmine.js";
 import { redmineAuth } from "../constants.js";
 import { Box, Text } from "ink";
 import SelectInput from "ink-select-input";
-import { deleteEntryCommand } from "../lib/commands.js";
 
 export const DeleteEntry = ({ args }: CommandsProps) => {
   const [arg1] = args ?? [];

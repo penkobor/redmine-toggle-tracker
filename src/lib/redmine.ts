@@ -90,113 +90,6 @@ function getTrackerId(trackerName: string): number {
   return trackersMap[trackerName] || 5; // Default to Task if not found
 }
 
-async function createTask(
-  taskName: string,
-  projectName: string,
-  redmineAuth: RedmineAuth
-): Promise<void> {
-  try {
-    const allProjects = await fetchAllProjects(redmineAuth);
-    if (!projectName) {
-      if (allProjects.length === 0) {
-        console.log("No projects found in Redmine.");
-        return;
-      }
-      // Display projects to the user
-      console.log("\nAvailable projects:\n");
-      allProjects.forEach((project, index) => {
-        console.log(`${index + 1}. ${project.name} (ID: ${project.id})`);
-      });
-
-      const projectIndex = await askQuestion(
-        "\nEnter the number of the project where the task should be created: ",
-        (answer) => {
-          const idx = parseInt(answer) - 1;
-          if (isNaN(idx) || idx < 0 || idx >= allProjects.length) {
-            throw new Error("Invalid project selection.");
-          }
-          return idx;
-        }
-      );
-      const projectFromSelection = allProjects[projectIndex];
-
-      if (projectFromSelection) {
-        proceedToCreateIssue(projectFromSelection);
-      }
-    }
-
-    const selectedProject = allProjects.find((p) => p.name === projectName);
-    if (!selectedProject) {
-      console.log(`Project "${projectName}" not found.`);
-      return;
-    }
-    proceedToCreateIssue(selectedProject);
-
-    async function proceedToCreateIssue(selectedProject: Project) {
-      // Prompt for tracker type
-      const trackers = ["Task", "Bug"];
-      console.log("\nAvailable trackers:\n");
-      trackers.forEach((tracker, index) => {
-        console.log(`${index + 1}. ${tracker}`);
-      });
-
-      const trackerIndex = await askQuestion(
-        "\nEnter the number of the tracker type: ",
-        (answer) => {
-          const index = parseInt(answer) - 1;
-          if (isNaN(index) || index < 0 || index >= trackers.length) {
-            throw new Error("Invalid tracker selection.");
-          }
-          return index;
-        }
-      );
-      const selectedTracker = trackers[trackerIndex];
-
-      const description = await askQuestion(
-        "\nEnter the description of the task (optional): "
-      );
-
-      const issueData = {
-        issue: {
-          project_id: selectedProject.id,
-          subject: taskName,
-          tracker_id: getTrackerId(selectedTracker),
-          description: description,
-        },
-      };
-
-      try {
-        const { issue } = await fetchJSON(
-          `${validateAndAdjustRedmineUrl(
-            process.env.REDMINE_API_URL!
-          )}issues.json`,
-          {
-            method: "POST",
-            headers: {
-              Authorization: createBasicAuth(redmineAuth),
-            },
-            body: JSON.stringify(issueData),
-          }
-        );
-        console.log(`\nIssue created successfully with ID #${issue.id}`);
-      } catch (err: any) {
-        console.error("❌ Error creating issue:", err.message);
-        console.error("🔍 Error details:", {
-          issueData,
-          redmineAuth,
-        });
-      }
-    }
-  } catch (error: any) {
-    console.error("❌ Error fetching projects:", error.message);
-    console.error("🔍 Error details:", {
-      taskName,
-      projectName,
-      redmineAuth,
-    });
-  }
-}
-
 const LOG_PRECISELY = "lp";
 let isEntryLoggedPrecisely: (entry: TogglEntry) => boolean = (entry) => {
   return (
@@ -373,7 +266,6 @@ async function deleteTimeEntry(entryId: number, redmineAuth: RedmineAuth) {
 
 export {
   fetchAllProjects,
-  createTask,
   trackTimeInRedmine,
   searchIssues,
   prepareRedmineEntries,
