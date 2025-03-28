@@ -27,7 +27,6 @@ export const DeleteEntry = ({ args }: CommandsProps) => {
   const { mutate, isPending, isSuccess, isError, error } = useMutation({
     mutationKey: ["delete", date],
     mutationFn: async (id: number) => {
-      console.log("Deleting entry with ID:", id);
       await deleteTimeEntry(id, redmineAuth);
     },
     onSuccess: () => {
@@ -47,9 +46,7 @@ export const DeleteEntry = ({ args }: CommandsProps) => {
   });
 
   const handleSelect = (item: { value: number }) => {
-    console.log(`Selected issue ID: ${item.value}`);
     mutate(item.value);
-    // Implement the delete logic here
   };
 
   return (
