@@ -14,7 +14,7 @@ export const DeleteEntry = ({ args }: CommandsProps) => {
 
   const {
     data = [],
-    isLoading,
+    isFetching,
     refetch,
   } = useQuery({
     queryKey: ["delete", date],
@@ -35,17 +35,13 @@ export const DeleteEntry = ({ args }: CommandsProps) => {
     },
   });
 
-  if (isLoading) {
-    return <Text>Loading...</Text>;
-  }
-
   if (data.length === 0) {
     return <Text>No time entries found for {date}</Text>;
   }
   const options = data.map((entry, idx) => {
     return {
       key: `${entry.issue.id}-${idx}`,
-      value: entry.issue.id,
+      value: entry.id,
       label: `Issue #${entry.issue.id}: ${entry.hours}h - ${entry.comments}`,
     };
   });
@@ -55,8 +51,10 @@ export const DeleteEntry = ({ args }: CommandsProps) => {
     mutate(item.value);
     // Implement the delete logic here
   };
+
   return (
     <Box flexDirection="column">
+      {isFetching && <Text color="yellow">Fetching entries...</Text>}
       <Text color="red">Select entry to delete:</Text>
       <SelectInput items={options} onSelect={handleSelect} />
       {isError && <Text color="red">{`Error: ${error.message}`}</Text>}
