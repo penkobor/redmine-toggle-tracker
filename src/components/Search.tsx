@@ -25,10 +25,10 @@ export const Search = () => {
     <Box flexDirection="column">
       <Box flexDirection="column" marginTop={1}>
         {isLoading && <Text>Loading...</Text>}
-        {data.map((issue) => {
+        {data.map((issue, idx) => {
           return (
             <Text
-              key={issue.id}
+              key={`${issue.id}-${idx}`}
             >{`- Issue #${issue.id}: ${issue.subject}`}</Text>
           );
         })}
