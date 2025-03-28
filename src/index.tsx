@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
-import React, { JSX } from "react";
-import { render, Text } from "ink";
+import React, { JSX, useState } from "react";
+import { Box, render, Text } from "ink";
 import { Help } from "./components/Help.js";
 import { Entries } from "./components/Entries.js";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -12,6 +12,7 @@ import { Toggle } from "./components/Toggle.js";
 import { MonthlySummary } from "./components/MonthlySummary.js";
 import { DeleteEntry } from "./components/DeleteEntry.js";
 import { CreateTask } from "./components/CreateTask.js";
+import SelectInput from "ink-select-input";
 
 const OutputMap: Record<string, (props: CommandsProps) => JSX.Element> = {
   "--help": Help,
@@ -26,9 +27,30 @@ const OutputMap: Record<string, (props: CommandsProps) => JSX.Element> = {
 
 const App = () => {
   const [command, ...args] = process.argv.slice(2);
+  const [selectedCommand, setCommand] = useState(command);
+
+  if (!selectedCommand) {
+    const options = Object.keys(OutputMap).map((key) => {
+      return {
+        value: key,
+        label: key,
+      };
+    });
+    return (
+      <Box flexDirection="column">
+        <Text color="green">Select a command:</Text>
+        <SelectInput
+          items={options}
+          onSelect={(i) => {
+            setCommand(i.value);
+          }}
+        />
+      </Box>
+    );
+  }
 
   const Component =
-    OutputMap[command as any] || (() => <Text>Invalid command</Text>);
+    OutputMap[selectedCommand as any] || (() => <Text>Invalid command</Text>);
 
   return <Component args={args} />;
 };
