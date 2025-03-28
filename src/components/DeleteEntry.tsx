@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Fragment } from "react";
 import { CommandsProps } from "./types.js";
 import { getDateString } from "../lib/helpers.js";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -34,9 +34,6 @@ export const DeleteEntry = ({ args }: CommandsProps) => {
     },
   });
 
-  if (data.length === 0) {
-    return <Text>No time entries found for {date}</Text>;
-  }
   const options = data.map((entry, idx) => {
     return {
       key: `${entry.issue.id}-${idx}`,
@@ -49,11 +46,18 @@ export const DeleteEntry = ({ args }: CommandsProps) => {
     mutate(item.value);
   };
 
+  const isEmpty = options.length === 0;
+
   return (
     <Box flexDirection="column">
       {isFetching && <Text color="yellow">Fetching entries...</Text>}
-      <Text color="red">Select entry to delete:</Text>
-      <SelectInput items={options} onSelect={handleSelect} />
+      {!isFetching && isEmpty && <Text color="red">No entries found</Text>}
+      {!isEmpty && (
+        <Fragment>
+          <Text color="red">Select entry to delete:</Text>
+          <SelectInput items={options} onSelect={handleSelect} />
+        </Fragment>
+      )}
       {isError && <Text color="red">{`Error: ${error.message}`}</Text>}
       {isPending && <Text color="yellow">Deleting...</Text>}
       {isSuccess && <Text color="green">Entry deleted successfully</Text>}

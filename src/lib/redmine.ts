@@ -256,12 +256,16 @@ async function deleteTimeEntry(entryId: number, redmineAuth: RedmineAuth) {
   const url = `${validateAndAdjustRedmineUrl(
     process.env.REDMINE_API_URL!
   )}time_entries/${entryId}.json`;
-  return fetch(url, {
+  const response = await fetch(url, {
     method: "DELETE",
     headers: {
       Authorization: createBasicAuth(redmineAuth),
     },
   });
+  if (!response.ok) {
+    throw new Error(`Response status: ${response.status}`);
+  }
+  return response;
 }
 
 export {
