@@ -62,6 +62,12 @@ const ToggleInternal = ({
     return <Text>Loading...</Text>;
   }
 
+  if (entries.length === 0) {
+    return (
+      <Text color="red">No time entries found for the selected date.</Text>
+    );
+  }
+
   return (
     <Box flexDirection="column">
       <Text>Time entries to be tracked in Redmine:</Text>
@@ -113,15 +119,16 @@ const options = days
 
 export const Toggle = ({ args }: CommandsProps) => {
   const [arg1, arg2] = args ?? [];
-  const daysAgo = (arg1 && parseInt(arg1)) || null;
-  const date = daysAgo && getDateString(daysAgo);
-  const [selectedDate, setSelectedDate] = useState(date);
-  const [submittedHours, setSubmittedHours] = useState(() => {
-    if (arg2) {
-      const parsedValue = parseInt(arg2);
-      return isNaN(parsedValue) ? undefined : parsedValue;
+  const daysAgo = parseInt(arg1);
+  const [selectedDate, setSelectedDate] = useState(() => {
+    if (isNaN(daysAgo)) {
+      return undefined;
     }
-    return undefined;
+    return getDateString(daysAgo);
+  });
+  const [submittedHours, setSubmittedHours] = useState(() => {
+    const parsedValue = parseInt(arg2);
+    return isNaN(parsedValue) ? undefined : parsedValue;
   });
   const [totalHours, setTotalHours] = useState(arg2);
   const [shouldTrack, setShouldTrack] = useState(false);
