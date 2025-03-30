@@ -4,12 +4,12 @@ import { Box, Text } from "ink";
 import { useQuery } from "@tanstack/react-query";
 import { redmineAuth } from "../constants.js";
 import { fetchUserTimeEntries } from "../lib/redmine.js";
+import { getDaysFromDate } from "../lib/helpers.js";
 
 const today = new Date();
 const year = today.getFullYear();
 const month = today.getMonth();
-
-const days = Array.from({ length: today.getDate() }, (_, i) => i + 1);
+const days = getDaysFromDate();
 
 export const MonthlySummary = () => {
   const { data = [], isLoading } = useQuery({

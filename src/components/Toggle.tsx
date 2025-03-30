@@ -1,24 +1,36 @@
 import React, { useState } from "react";
 import { CommandsProps } from "./types.js";
-import { getDateString, validateAndAdjustRedmineUrl } from "../lib/helpers.js";
-import { Box, Text, useApp, useInput } from "ink";
+import {
+  getDateString,
+  getDaysFromDate,
+  validateAndAdjustRedmineUrl,
+} from "../lib/helpers.js";
+import { Box, Text, useApp } from "ink";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { fetchTogglTimeEntries } from "../lib/toggl.js";
 import { redmineAuth, togglAuth } from "../constants.js";
 import { prepareRedmineEntries, trackTimeInRedmine } from "../lib/redmine.js";
 import { ConfirmInput } from "./ConfirmInput.js";
+import SelectInput from "ink-select-input";
+import TextInput from "ink-text-input";
 
 const togglUrl = process.env.TOGGL_API_URL!;
 const togglWorkspaceId = process.env.TOGGL_WORKSPACE_ID!;
 const redmineUrl = validateAndAdjustRedmineUrl(process.env.REDMINE_API_URL!);
 
-export const Toggle = ({ args }: CommandsProps) => {
-  const [arg1, arg2] = args ?? [];
-  const daysAgo = arg1 ? parseInt(arg1) : 0;
-  const totalHours = arg2 ? parseFloat(arg2) : 8;
-  const date = getDateString(daysAgo);
+const today = new Date();
+const year = today.getFullYear();
+const month = today.getMonth();
+const days = getDaysFromDate(today);
+
+const ToggleInternal = ({
+  date,
+  totalHours,
+}: {
+  date: string;
+  totalHours: number;
+}) => {
   const { exit } = useApp();
-  const [shouldTrack, setShouldTrack] = useState(false);
   const [shouldTrackRedmine, setShouldTrackRedmine] = useState(false);
 
   const { data: entries = [], isLoading } = useQuery({
@@ -34,7 +46,6 @@ export const Toggle = ({ args }: CommandsProps) => {
       return prepareRedmineEntries(toggleEntries, totalHours);
     },
     refetchOnWindowFocus: false,
-    enabled: shouldTrack,
   });
 
   const { mutate, isSuccess, isPending } = useMutation({
@@ -46,21 +57,6 @@ export const Toggle = ({ args }: CommandsProps) => {
       exit();
     },
   });
-
-  if (!shouldTrack) {
-    return (
-      <Box>
-        <Text>
-          Track {totalHours} hours for date "{date}"? (y/n)
-        </Text>
-        <ConfirmInput
-          onPress={(checked) => {
-            setShouldTrack(checked);
-          }}
-        />
-      </Box>
-    );
-  }
 
   if (isLoading) {
     return <Text>Loading...</Text>;
@@ -90,6 +86,8 @@ export const Toggle = ({ args }: CommandsProps) => {
               if (checked) {
                 setShouldTrackRedmine(checked);
                 mutate();
+              } else {
+                exit();
               }
             }}
           />
@@ -99,4 +97,81 @@ export const Toggle = ({ args }: CommandsProps) => {
       {isSuccess && <Text>Time entries tracked successfully!</Text>}
     </Box>
   );
+};
+
+const options = days
+  .map((day) => {
+    const date = new Date(year, month, day);
+    const dayName = date.toLocaleDateString("en-US", { weekday: "long" });
+    const dateString = date.toISOString().split("T")[0];
+    return {
+      label: `${dateString} - ${dayName}`,
+      value: dateString,
+    };
+  })
+  .reverse();
+
+export const Toggle = ({ args }: CommandsProps) => {
+  const [arg1, arg2] = args ?? [];
+  const daysAgo = (arg1 && parseInt(arg1)) || null;
+  const date = daysAgo && getDateString(daysAgo);
+  const [selectedDate, setSelectedDate] = useState(date);
+  const [submittedHours, setSubmittedHours] = useState(() => {
+    if (arg2) {
+      const parsedValue = parseInt(arg2);
+      return isNaN(parsedValue) ? undefined : parsedValue;
+    }
+    return undefined;
+  });
+  const [totalHours, setTotalHours] = useState(arg2);
+  const [shouldTrack, setShouldTrack] = useState(false);
+
+  if (!selectedDate) {
+    return (
+      <Box flexDirection="column">
+        <Text>Select a date:</Text>
+        <SelectInput
+          items={options}
+          limit={10}
+          onSelect={(item) => setSelectedDate(item.value)}
+        />
+      </Box>
+    );
+  }
+
+  if (submittedHours == null || submittedHours === undefined) {
+    const parsedValue = totalHours?.toString() ?? "";
+    return (
+      <Box>
+        <Text>Enter total hours for date "{selectedDate}":</Text>
+        <TextInput
+          value={parsedValue}
+          onChange={(input) => {
+            setTotalHours(input);
+          }}
+          onSubmit={() => {
+            const parsedValue = (totalHours && parseInt(totalHours)) || 0;
+            setSubmittedHours(parsedValue);
+          }}
+        />
+      </Box>
+    );
+  }
+
+  if (!shouldTrack) {
+    return (
+      <Box>
+        <Text>
+          Track {totalHours} hours for date "{selectedDate}"? (y/n)
+        </Text>
+        <ConfirmInput
+          onPress={(checked) => {
+            setShouldTrack(checked);
+          }}
+        />
+      </Box>
+    );
+  }
+
+  return <ToggleInternal date={selectedDate} totalHours={submittedHours} />;
 };
