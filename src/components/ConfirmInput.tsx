@@ -17,7 +17,7 @@ export const ConfirmInput = ({
     const positiveResponse = ["y", "yes"];
     const negativeResponse = ["n", "no"];
     setError(null);
-    if (positiveResponse.includes(lowerValue)) {
+    if (positiveResponse.includes(lowerValue) || value.length === 0) {
       onPress(true);
     } else if (negativeResponse.includes(lowerValue)) {
       onPress(false);
