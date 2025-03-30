@@ -105,8 +105,6 @@ const ToggleInternal = ({
   );
 };
 
-console.log("options", days);
-
 const options = days
   .map((day) => {
     const date = new Date(year, month, day);
