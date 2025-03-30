@@ -105,10 +105,13 @@ const ToggleInternal = ({
   );
 };
 
+console.log("options", days);
+
 const options = days
   .map((day) => {
     const date = new Date(year, month, day);
     const dayName = date.toLocaleDateString("en-US", { weekday: "long" });
+    date.setDate(date.getDate() + 1);
     const dateString = date.toISOString().split("T")[0];
     return {
       label: `${dateString} - ${dayName}`,
