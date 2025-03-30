@@ -123,6 +123,7 @@ export const CreateTask = ({ args }: CommandsProps) => {
       />
       {isError && <Text color="red">{error.message}</Text>}
       {isPending && <Text>Creating task...</Text>}
+      {isSuccess && <Text color="green">Task created successfully</Text>}
     </Box>
   );
 };

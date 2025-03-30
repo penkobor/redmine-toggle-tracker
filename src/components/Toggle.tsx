@@ -125,6 +125,7 @@ export const Toggle = ({ args }: CommandsProps) => {
   });
   const [totalHours, setTotalHours] = useState(arg2);
   const [shouldTrack, setShouldTrack] = useState(false);
+  const { exit } = useApp();
 
   if (!selectedDate) {
     return (
@@ -166,6 +167,10 @@ export const Toggle = ({ args }: CommandsProps) => {
         </Text>
         <ConfirmInput
           onPress={(checked) => {
+            if (!checked) {
+              exit();
+              return;
+            }
             setShouldTrack(checked);
           }}
         />
