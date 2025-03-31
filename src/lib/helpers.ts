@@ -60,3 +60,7 @@ export function validateAndAdjustRedmineUrl(
 
   return url.trim();
 }
+
+export const getDaysFromDate = (date = new Date()) => {
+  return Array.from({ length: date.getDate() }, (_, i) => i + 1);
+};

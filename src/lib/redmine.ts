@@ -1,10 +1,10 @@
-import { fetchJSON, validateAndAdjustRedmineUrl } from "./helpers";
-import { createBasicAuth, RedmineAuth } from "./auth";
-import { getActivityId } from "./activities";
-import { askQuestion } from "./questions";
-import { TogglEntry } from "./toggl";
+import { fetchJSON, validateAndAdjustRedmineUrl } from "./helpers.js";
+import { createBasicAuth, RedmineAuth } from "./auth.js";
+import { getActivityId } from "./activities.js";
+import { askQuestion } from "./questions.js";
+import { TogglEntry } from "./toggl.js";
 
-interface RedmineEntry {
+export interface RedmineEntry {
   time_entry: {
     issue_id: number;
     hours: number;
@@ -90,138 +90,40 @@ function getTrackerId(trackerName: string): number {
   return trackersMap[trackerName] || 5; // Default to Task if not found
 }
 
-async function createTask(
-  taskName: string,
-  projectName: string,
-  redmineAuth: RedmineAuth
-): Promise<void> {
-  try {
-    const allProjects = await fetchAllProjects(redmineAuth);
-    if (!projectName) {
-      if (allProjects.length === 0) {
-        console.log("No projects found in Redmine.");
-        return;
-      }
-      // Display projects to the user
-      console.log("\nAvailable projects:\n");
-      allProjects.forEach((project, index) => {
-        console.log(`${index + 1}. ${project.name} (ID: ${project.id})`);
-      });
-
-      const projectIndex = await askQuestion(
-        "\nEnter the number of the project where the task should be created: ",
-        (answer) => {
-          const idx = parseInt(answer) - 1;
-          if (isNaN(idx) || idx < 0 || idx >= allProjects.length) {
-            throw new Error("Invalid project selection.");
-          }
-          return idx;
-        }
-      );
-      const projectFromSelection = allProjects[projectIndex];
-
-      if (projectFromSelection) {
-        proceedToCreateIssue(projectFromSelection);
-      }
-    }
-
-    const selectedProject = allProjects.find((p) => p.name === projectName);
-    if (!selectedProject) {
-      console.log(`Project "${projectName}" not found.`);
-      return;
-    }
-    proceedToCreateIssue(selectedProject);
-
-    async function proceedToCreateIssue(selectedProject: Project) {
-      // Prompt for tracker type
-      const trackers = ["Task", "Bug"];
-      console.log("\nAvailable trackers:\n");
-      trackers.forEach((tracker, index) => {
-        console.log(`${index + 1}. ${tracker}`);
-      });
-
-      const trackerIndex = await askQuestion(
-        "\nEnter the number of the tracker type: ",
-        (answer) => {
-          const index = parseInt(answer) - 1;
-          if (isNaN(index) || index < 0 || index >= trackers.length) {
-            throw new Error("Invalid tracker selection.");
-          }
-          return index;
-        }
-      );
-      const selectedTracker = trackers[trackerIndex];
-
-      const description = await askQuestion(
-        "\nEnter the description of the task (optional): "
-      );
-
-      const issueData = {
-        issue: {
-          project_id: selectedProject.id,
-          subject: taskName,
-          tracker_id: getTrackerId(selectedTracker),
-          description: description,
-        },
-      };
-
-      try {
-        const { issue } = await fetchJSON(
-          `${validateAndAdjustRedmineUrl(
-            process.env.REDMINE_API_URL!
-          )}issues.json`,
-          {
-            method: "POST",
-            headers: {
-              Authorization: createBasicAuth(redmineAuth),
-            },
-            body: JSON.stringify(issueData),
-          }
-        );
-        console.log(`\nIssue created successfully with ID #${issue.id}`);
-      } catch (err: any) {
-        console.error("❌ Error creating issue:", err.message);
-        console.error("🔍 Error details:", {
-          issueData,
-          redmineAuth,
-        });
-      }
-    }
-  } catch (error: any) {
-    console.error("❌ Error fetching projects:", error.message);
-    console.error("🔍 Error details:", {
-      taskName,
-      projectName,
-      redmineAuth,
-    });
-  }
-}
-
 const LOG_PRECISELY = "lp";
 let isEntryLoggedPrecisely: (entry: TogglEntry) => boolean = (entry) => {
-  return entry.description.includes(`@${LOG_PRECISELY}`) || entry.tags.includes(LOG_PRECISELY);
-}
+  return (
+    entry.description.includes(`@${LOG_PRECISELY}`) ||
+    entry.tags.includes(LOG_PRECISELY)
+  );
+};
 
 function prepareRedmineEntries(
   togglEntries: TogglEntry[],
   requiredHoursCap: number
 ): RedmineEntry[] {
-  const adjustCoefficient = (requiredHoursCap == 0) ? 1 : (function(): number {
-    const workedDurationSeconds = togglEntries.reduce(
-      (sum, entry) => sum + entry.duration,
-      0
-    );
-    const workedDurationHours = workedDurationSeconds / 3600;
-  
-    const preciseDurationSeconds = togglEntries.filter(isEntryLoggedPrecisely).reduce(
-      (sum, entry) => sum + entry.duration,
-      0
-    );
-    const preciseDurationHours = preciseDurationSeconds / 3600;
-  
-    const adjustableDurationHours = workedDurationHours - preciseDurationHours;
-    return (requiredHoursCap - preciseDurationHours) / adjustableDurationHours || 1;
-  })();
+  const adjustCoefficient =
+    requiredHoursCap == 0
+      ? 1
+      : (function (): number {
+          const workedDurationSeconds = togglEntries.reduce(
+            (sum, entry) => sum + entry.duration,
+            0
+          );
+          const workedDurationHours = workedDurationSeconds / 3600;
+
+          const preciseDurationSeconds = togglEntries
+            .filter(isEntryLoggedPrecisely)
+            .reduce((sum, entry) => sum + entry.duration, 0);
+          const preciseDurationHours = preciseDurationSeconds / 3600;
+
+          const adjustableDurationHours =
+            workedDurationHours - preciseDurationHours;
+          return (
+            (requiredHoursCap - preciseDurationHours) /
+              adjustableDurationHours || 1
+          );
+        })();
 
   let redmineEntries: RedmineEntry[] = [];
 
@@ -234,7 +136,8 @@ function prepareRedmineEntries(
     const issueId = issueIdMatch ? issueIdMatch[1] : null;
 
     const adjustedDurationHours =
-      (durationSeconds / 3600) * (isEntryLoggedPrecisely(entry) ? 1 : adjustCoefficient);
+      (durationSeconds / 3600) *
+      (isEntryLoggedPrecisely(entry) ? 1 : adjustCoefficient);
 
     const comments = description
       .replace(/#[0-9]+/, "")
@@ -268,7 +171,7 @@ async function trackTimeInRedmine(
 
   for (const entry of redmineEntries) {
     try {
-      const response = await fetchJSON(redmineTimeEntriesUrl, {
+      await fetchJSON(redmineTimeEntriesUrl, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -276,9 +179,6 @@ async function trackTimeInRedmine(
         },
         body: JSON.stringify(entry),
       });
-      console.log(
-        `#${entry.time_entry.issue_id}: ${entry.time_entry.hours}h tracked in Redmine.`
-      );
     } catch (error) {
       console.error(
         `Failed to track time for issue #${entry.time_entry.issue_id}:`,
@@ -300,9 +200,7 @@ async function searchIssues(
 ): Promise<any[]> {
   const encodedQuery = encodeURIComponent(searchQuery);
   const url =
-    `${validateAndAdjustRedmineUrl(
-      process.env.REDMINE_API_URL!
-    )}issues.json?` +
+    `${validateAndAdjustRedmineUrl(process.env.REDMINE_API_URL!)}issues.json?` +
     `offset=0&limit=20&` +
     `f[]=subject&op[subject]=~&v[subject][]=${encodedQuery}` +
     `&sort=updated_on:desc`;
@@ -333,8 +231,7 @@ async function fetchUserTimeEntries(
   const url =
     `${validateAndAdjustRedmineUrl(
       process.env.REDMINE_API_URL!
-    )}time_entries.json?` +
-    `user_id=me&spent_on=${date}`;
+    )}time_entries.json?` + `user_id=me&spent_on=${date}`;
 
   try {
     const response = await fetchJSON(url, {
@@ -355,40 +252,24 @@ async function fetchUserTimeEntries(
 }
 
 // Function to delete a time entry from Redmine
-async function deleteTimeEntry(
-  entryId: number,
-  redmineAuth: RedmineAuth
-): Promise<void> {
+async function deleteTimeEntry(entryId: number, redmineAuth: RedmineAuth) {
   const url = `${validateAndAdjustRedmineUrl(
     process.env.REDMINE_API_URL!
   )}time_entries/${entryId}.json`;
-
-  try {
-    const response = await fetch(url, {
-      method: "DELETE",
-      headers: {
-        Authorization: createBasicAuth(redmineAuth),
-      },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Failed to delete time entry with ID ${entryId}`);
-    }
-
-    console.log(`Time entry with ID ${entryId} deleted successfully.`);
-  } catch (err) {
-    console.error("Failed to delete time entry:", err);
-    console.error("🔍 Error details:", {
-      entryId,
-      redmineAuth,
-      url,
-    });
+  const response = await fetch(url, {
+    method: "DELETE",
+    headers: {
+      Authorization: createBasicAuth(redmineAuth),
+    },
+  });
+  if (!response.ok) {
+    throw new Error(`Response status: ${response.status}`);
   }
+  return response;
 }
 
 export {
   fetchAllProjects,
-  createTask,
   trackTimeInRedmine,
   searchIssues,
   prepareRedmineEntries,

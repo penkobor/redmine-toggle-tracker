@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "nodejs project",
   "main": "dist/index.js",
+  "type": "module",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node dist/index.js",
@@ -14,11 +15,17 @@
   "author": "nodejs",
   "license": "ISC",
   "dependencies": {
+    "@tanstack/react-query": "^5.69.0",
     "@types/node": "^22.9.1",
     "dotenv": "^16.4.5",
-    "express": "^4.17.1"
+    "express": "^4.17.1",
+    "ink": "^5.2.0",
+    "ink-select-input": "^6.0.0",
+    "ink-text-input": "^6.0.0",
+    "react": "^18.3.1"
   },
   "devDependencies": {
+    "@types/react": "^19.0.12",
     "typescript": "^5.0.0"
   }
 }

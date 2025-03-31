@@ -1,5 +1,5 @@
-import { createBasicAuth } from "./auth";
-import { fetchJSON, makeQueryFromObject } from "./helpers";
+import { createBasicAuth } from "./auth.js";
+import { fetchJSON, makeQueryFromObject } from "./helpers.js";
 
 export interface TogglEntry {
   description: string;
@@ -15,13 +15,15 @@ export async function fetchTogglTimeEntries(
   date: string,
   togglWorkspaceId: string
 ) {
-
   // #TODO: get the account's desired TZ offset from Toggl API, not from local machine. It will be most probably equal, but not guaranteed.
   // Date.getTimezoneOffset is weird, giving negative values for "ahead" timezones (e.g. UTC+1 = -60) and vice versa
   // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/getTimezoneOffset#negative_values_and_positive_values
   // Hence the negation in the following line
-  const localMachineTZOffsetMinutes = -(new Date(date).getTimezoneOffset());
-  const tzOffsetHrsFormatted = localMachineTZOffsetMinutes < 0 ? "-" : "+" + `00${Math.abs(localMachineTZOffsetMinutes / 60)}`.slice(-2);
+  const localMachineTZOffsetMinutes = -new Date(date).getTimezoneOffset();
+  const tzOffsetHrsFormatted =
+    localMachineTZOffsetMinutes < 0
+      ? "-"
+      : "+" + `00${Math.abs(localMachineTZOffsetMinutes / 60)}`.slice(-2);
 
   const params = {
     start_date: `${date}T00:00:00${tzOffsetHrsFormatted}:00`,
@@ -38,7 +40,10 @@ export async function fetchTogglTimeEntries(
     });
     return (response as TogglEntry[]).map((entry) => ({
       ...entry,
-      start: new Date(new Date(entry.start).getTime() + localMachineTZOffsetMinutes * 60 * 1000).toISOString(),
+      start: new Date(
+        new Date(entry.start).getTime() +
+          localMachineTZOffsetMinutes * 60 * 1000
+      ).toISOString(),
     }));
   } catch (err: any) {
     console.error("❌ Failed to fetch Toggl time entries:", err.message);
