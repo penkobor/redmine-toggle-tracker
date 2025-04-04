@@ -11,8 +11,11 @@ export async function fetchTogglTimeEntries(
   // Date.getTimezoneOffset is weird, giving negative values for "ahead" timezones (e.g. UTC+1 = -60) and vice versa
   // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Date/getTimezoneOffset#negative_values_and_positive_values
   // Hence the negation in the following line
-  const localMachineTZOffsetMinutes = -(new Date(date).getTimezoneOffset());
-  const tzOffsetHrsFormatted = localMachineTZOffsetMinutes < 0 ? "-" : "+" + `00${Math.abs(localMachineTZOffsetMinutes / 60)}`.slice(-2);
+  const localMachineTZOffsetMinutes = -new Date(date).getTimezoneOffset();
+  const tzOffsetHrsFormatted =
+    localMachineTZOffsetMinutes < 0
+      ? "-"
+      : "+" + `00${Math.abs(localMachineTZOffsetMinutes / 60)}`.slice(-2);
 
   // const preferencesResponse = await getPreferences({
   //   client
