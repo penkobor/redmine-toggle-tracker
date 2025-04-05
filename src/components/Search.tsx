@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Box, Text } from "ink";
 import { useQuery } from "@tanstack/react-query";
-import { redmineAuth } from "../constants.js";
+import { redmineClient } from "../constants.js";
 import { searchIssues } from "../lib/redmine.js";
 import TextInput from "ink-text-input";
 
@@ -12,7 +12,7 @@ export const Search = () => {
     queryKey: ["search", searchQuery],
     queryFn: () => {
       // Implement the search logic here
-      return searchIssues(searchQuery, redmineAuth);
+      return searchIssues(redmineClient, searchQuery);
     },
     enabled: searchQuery.length > 0,
   });
@@ -29,7 +29,7 @@ export const Search = () => {
           return (
             <Text
               key={`${issue.id}-${idx}`}
-            >{`- Issue #${issue.id}: ${issue.subject}`}</Text>
+            >{`- Issue #${issue.id}: ${issue.title}`}</Text>
           );
         })}
       </Box>

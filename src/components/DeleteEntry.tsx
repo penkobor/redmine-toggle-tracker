@@ -3,7 +3,7 @@ import { CommandsProps } from "./types.js";
 import { getDateString } from "../lib/helpers.js";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { deleteTimeEntry, fetchUserTimeEntries } from "../lib/redmine.js";
-import { redmineAuth } from "../constants.js";
+import { redmineClient } from "../constants.js";
 import { Box, Text } from "ink";
 import SelectInput from "ink-select-input";
 
@@ -20,14 +20,14 @@ export const DeleteEntry = ({ args }: CommandsProps) => {
     queryKey: ["delete", date],
     queryFn: () => {
       // Implement the delete logic here
-      return fetchUserTimeEntries(redmineAuth, date);
+      return fetchUserTimeEntries(redmineClient, date);
     },
   });
 
   const { mutate, isPending, isSuccess, isError, error } = useMutation({
     mutationKey: ["delete", date],
     mutationFn: async (id: number) => {
-      await deleteTimeEntry(id, redmineAuth);
+      await deleteTimeEntry(redmineClient, id);
     },
     onSuccess: () => {
       refetch();
@@ -36,9 +36,9 @@ export const DeleteEntry = ({ args }: CommandsProps) => {
 
   const options = data.map((entry, idx) => {
     return {
-      key: `${entry.issue.id}-${idx}`,
+      key: `${entry.issue!.id}-${idx}`,
       value: entry.id,
-      label: `Issue #${entry.issue.id}: ${entry.hours}h - ${entry.comments}`,
+      label: `Issue #${entry.issue!.id}: ${entry.hours}h - ${entry.comments}`,
     };
   });
 

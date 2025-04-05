@@ -1,6 +1,6 @@
 import { getActivityId } from "./activities.js";
-import { ModelsTimeEntry as TogglTimeEntry } from "../api-toggl";
-import { createIssue, createTimeEntry, getIssues, getProjects, getTimeEntries, getTrackers, IssueSimple, TimeEntry as RedmineTimeEntry, deleteTimeEntry as redmineDeleteTimeEntry, search, Search } from "../api-redmine";
+import { ModelsTimeEntry as TogglTimeEntry } from "../api-toggl/index.js";
+import { createTimeEntry, getProjects, getTimeEntries, TimeEntry as RedmineTimeEntry, deleteTimeEntry as redmineDeleteTimeEntry, search, Search } from "../api-redmine/index.js";
 import { Client } from "@hey-api/client-fetch";
 
 // Redmine un-official OpenAPI does define the TimeEntry model but it is used only for responses (?)
@@ -79,8 +79,8 @@ function getTrackerId(trackerName: string): number {
 const LOG_PRECISELY = "lp";
 let isEntryLoggedPrecisely: (entry: TogglTimeEntry) => boolean = (entry) => {
   return (
-    entry.description.includes(`@${LOG_PRECISELY}`) ||
-    entry.tags.includes(LOG_PRECISELY)
+    entry.description!.includes(`@${LOG_PRECISELY}`) ||
+    entry.tags!.includes(LOG_PRECISELY)
   );
 };
 
@@ -93,14 +93,14 @@ function prepareRedmineEntries(
       ? 1
       : (function (): number {
           const workedDurationSeconds = togglEntries.reduce(
-            (sum, entry) => sum + entry.duration,
+            (sum, entry) => sum + entry.duration!,
             0
           );
           const workedDurationHours = workedDurationSeconds / 3600;
 
           const preciseDurationSeconds = togglEntries
             .filter(isEntryLoggedPrecisely)
-            .reduce((sum, entry) => sum + entry.duration, 0);
+            .reduce((sum, entry) => sum + entry.duration!, 0);
           const preciseDurationHours = preciseDurationSeconds / 3600;
 
           const adjustableDurationHours =
@@ -152,7 +152,7 @@ async function trackTimeInRedmine(
   redmineClient: Client,
   redmineEntries: RedmineEntry[],
 ): Promise<RedmineTimeEntry[]> {
-  let response: RedmineTimeEntry[] = [];
+  let createdEntries: RedmineTimeEntry[] = [];
   for (const entry of redmineEntries) {
     const response = await createTimeEntry({
       client: redmineClient,
@@ -162,10 +162,10 @@ async function trackTimeInRedmine(
     if(response.error) {
       throw new Error(`HTTP error: ${response.error}`);
     } else {
-      response.push(response.data!.time_entry);
+      createdEntries.push(response.data!.time_entry);
     }
   }
-  return response;
+  return createdEntries;
 }
 
 // Function to search issues using the standard Redmine API
@@ -176,7 +176,7 @@ async function searchIssues(
   const response = await search({
     client: redmineClient,
     path: { format: "json" },
-    query: { offset: 0, limit: 20, q: searchQuery, sort: "updated_on:desc" }
+    query: { offset: 0, limit: 20, q: searchQuery }
   })
   if(response.error) {
     throw new Error(`HTTP error: ${response.error}`);

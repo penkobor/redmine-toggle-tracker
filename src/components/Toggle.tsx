@@ -2,21 +2,18 @@ import React, { useState } from "react";
 import { CommandsProps } from "./types.js";
 import {
   getDateString,
-  getDaysFromDate,
-  validateAndAdjustRedmineUrl,
+  getDaysFromDate
 } from "../lib/helpers.js";
 import { Box, Text, useApp } from "ink";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { fetchTogglTimeEntries } from "../lib/toggl.js";
-import { redmineAuth, togglAuth } from "../constants.js";
+import { redmineClient, togglClient } from "../constants.js";
 import { prepareRedmineEntries, trackTimeInRedmine } from "../lib/redmine.js";
 import { ConfirmInput } from "./ConfirmInput.js";
 import SelectInput from "ink-select-input";
 import TextInput from "ink-text-input";
 
-const togglUrl = process.env.TOGGL_API_URL!;
 const togglWorkspaceId = process.env.TOGGL_WORKSPACE_ID!;
-const redmineUrl = validateAndAdjustRedmineUrl(process.env.REDMINE_API_URL!);
 
 const today = new Date();
 const year = today.getFullYear();
@@ -37,8 +34,7 @@ const ToggleInternal = ({
     queryKey: ["toggle", date],
     queryFn: async () => {
       const toggleEntries = await fetchTogglTimeEntries(
-        togglAuth,
-        togglUrl,
+        togglClient,
         date,
         togglWorkspaceId
       );
@@ -51,7 +47,7 @@ const ToggleInternal = ({
   const { mutate, isSuccess, isPending } = useMutation({
     mutationKey: ["track", date],
     mutationFn: async () => {
-      await trackTimeInRedmine(entries, redmineAuth, redmineUrl);
+      await trackTimeInRedmine(redmineClient, entries);
     },
     onSuccess: () => {
       exit();

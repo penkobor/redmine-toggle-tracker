@@ -1,8 +1,7 @@
 import React from "react";
-import { CommandsProps } from "./types.js";
 import { Box, Text } from "ink";
 import { useQuery } from "@tanstack/react-query";
-import { redmineAuth } from "../constants.js";
+import { redmineClient } from "../constants.js";
 import { fetchUserTimeEntries } from "../lib/redmine.js";
 import { getDaysFromDate } from "../lib/helpers.js";
 
@@ -22,7 +21,7 @@ export const MonthlySummary = () => {
           const dayName = date.toLocaleDateString("en-US", { weekday: "long" });
           date.setDate(date.getDate() + 1);
           const dateString = date.toISOString().split("T")[0];
-          const entries = await fetchUserTimeEntries(redmineAuth, dateString);
+          const entries = await fetchUserTimeEntries(redmineClient, dateString);
           const totalHours = entries.reduce(
             (acc, entry) => acc + entry.hours,
             0

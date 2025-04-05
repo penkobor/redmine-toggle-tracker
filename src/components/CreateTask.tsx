@@ -5,9 +5,8 @@ import { CommandsProps } from "./types.js";
 import SelectInput from "ink-select-input";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { fetchAllProjects } from "../lib/redmine.js";
-import { redmineAuth } from "../constants.js";
-import { fetchJSON, validateAndAdjustRedmineUrl } from "../lib/helpers.js";
-import { createBasicAuth } from "../lib/auth.js";
+import { redmineClient } from "../constants.js";
+import { createIssue } from "../api-redmine/sdk.gen.js";
 
 const taskOptions = [
   { label: "Task", value: "Task" },
@@ -25,7 +24,7 @@ export const CreateTask = ({ args }: CommandsProps) => {
   const { data: projects = [], isLoading } = useQuery({
     queryKey: ["projects"],
     queryFn: async () => {
-      return fetchAllProjects(redmineAuth);
+      return fetchAllProjects(redmineClient);
     },
   });
 
@@ -50,23 +49,19 @@ export const CreateTask = ({ args }: CommandsProps) => {
         issue: {
           project_id: selectedProject.id,
           subject: name,
-          tracker_id: type,
+          tracker_id: Number(type),
           description: description,
         },
       };
-      const { issue } = await fetchJSON(
-        `${validateAndAdjustRedmineUrl(
-          process.env.REDMINE_API_URL!
-        )}issues.json`,
-        {
-          method: "POST",
-          headers: {
-            Authorization: createBasicAuth(redmineAuth),
-          },
-          body: JSON.stringify(issueData),
-        }
-      );
-      console.log(`Task created successfully with ID #${issue.id}`);
+      const response = await createIssue({
+        client: redmineClient,
+        path: { format: "json" },
+        body: issueData
+      });
+      if(response.error) {
+        throw new Error(`Error creating task: ${response.error}`);
+      }
+      console.log(`Task created successfully with ID #${response.data!.issue.id}`);
     },
     onSuccess: () => {
       exit();

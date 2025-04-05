@@ -1,5 +1,5 @@
 import { Client } from "@hey-api/client-fetch";
-import { getMyTimeEntries, ModelsTimeEntry, getPreferences } from "../api-toggl";
+import { getMyTimeEntries, ModelsTimeEntry } from "../api-toggl/index.js";
 
 export async function fetchTogglTimeEntries(
   client: Client,
