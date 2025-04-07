@@ -1,13 +1,13 @@
 import { Box, Text, useApp } from "ink";
 import TextInput from "ink-text-input";
 import React, { useState } from "react";
-import { CommandsProps } from "./types.js";
 import SelectInput from "ink-select-input";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { fetchAllProjects } from "../lib/redmine.js";
 import { redmineAuth } from "../constants.js";
 import { fetchJSON, validateAndAdjustRedmineUrl } from "../lib/helpers.js";
 import { createBasicAuth } from "../lib/auth.js";
+import { ConfirmInput } from "./ConfirmInput.js";
 
 const taskOptions = [
   { label: "Task", value: "Task" },
@@ -15,7 +15,11 @@ const taskOptions = [
 ];
 
 const defaultProjectId = process.env.DEFAULT_PROJECT;
-export const CreateTask = ({ args }: CommandsProps) => {
+
+export const CreateTask = () => {
+  const [isAskedAboutDefaultProject, setIsAskedAboutDefaultProject] =
+    useState(false);
+  const [projectId, setProjectId] = useState<string | undefined>();
   const [taskName, setTaskName] = useState("");
   const [submittedTaskName, setSubmittedTaskName] = useState("");
   const [taskType, setTaskType] = useState<string | null>(null);
@@ -41,7 +45,7 @@ export const CreateTask = ({ args }: CommandsProps) => {
       description?: string;
     }) => {
       const selectedProject = projects.find(
-        (project) => project.name === defaultProjectId
+        (project) => project.name === projectId
       );
       if (!selectedProject) {
         throw new Error("Project not found");
@@ -73,12 +77,42 @@ export const CreateTask = ({ args }: CommandsProps) => {
     },
   });
 
-  if (!defaultProjectId) {
+  if (!isAskedAboutDefaultProject) {
     return (
-      <Text>
-        Default project ID is not set. Please set the DEFAULT_PROJECT
-        environment variable.
-      </Text>
+      <Box>
+        <Text>Use default project? (y/n)</Text>
+        <ConfirmInput
+          onPress={(checked) => {
+            if (checked) {
+              setProjectId(defaultProjectId);
+            }
+            setIsAskedAboutDefaultProject(true);
+          }}
+        />
+      </Box>
+    );
+  }
+
+  if (!projectId) {
+    const options = projects.map((project) => {
+      return {
+        value: project.name,
+        label: project.name,
+      };
+    });
+    return (
+      <Box flexDirection="column">
+        {!projectId && !defaultProjectId && (
+          <Text color="red">Default project not found please select one:</Text>
+        )}
+        <SelectInput
+          limit={10}
+          items={options}
+          onSelect={(item) => {
+            setProjectId(item.value);
+          }}
+        />
+      </Box>
     );
   }
 
