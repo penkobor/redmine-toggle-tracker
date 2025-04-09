@@ -215,7 +215,7 @@ async function deleteTimeEntry(
   if(response.error) {
     throw new Error(`HTTP error: ${response.error}`);
   }
-  return response.data;
+  // deleteTimeEntry response.data is void 
 }
 
 export {
