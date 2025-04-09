@@ -1,10 +1,12 @@
-import { fetchJSON, validateAndAdjustRedmineUrl } from "./helpers.js";
-import { createBasicAuth, RedmineAuth } from "./auth.js";
 import { getActivityId } from "./activities.js";
-import { askQuestion } from "./questions.js";
-import { TogglEntry } from "./toggl.js";
+import { ModelsTimeEntry as TogglTimeEntry } from "../api-toggl/index.js";
+import { createTimeEntry, getProjects, getTimeEntries, TimeEntry as RedmineTimeEntry, deleteTimeEntry as redmineDeleteTimeEntry, search, Search } from "../api-redmine/index.js";
+import { Client } from "@hey-api/client-fetch";
 
-export interface RedmineEntry {
+// Redmine un-official OpenAPI does define the TimeEntry model but it is used only for responses (?)
+// And the call `createTimeEntry` parameter defines slightly different structure (inline, anonymous)
+// (issue_id -> issue.id, activity_id -> activity) and for some reason wraps it in an additional time_entry "hash" (as the doc calls it)
+interface RedmineEntry {
   time_entry: {
     issue_id: number;
     hours: number;
@@ -13,44 +15,30 @@ export interface RedmineEntry {
     activity_id: number;
   };
 }
-
 interface Project {
   id: number;
   name: string;
 }
 
 // Function to fetch all projects from Redmine
-async function fetchAllProjects(redmineAuth: RedmineAuth): Promise<Project[]> {
-  const redmineApiKey = redmineAuth.username; // Replace with your actual API key
-  const redmineProjectsUrl = `${validateAndAdjustRedmineUrl(
-    process.env.REDMINE_API_URL!
-  )}projects.json`;
+async function fetchAllProjects(redmineClient: Client): Promise<Project[]> {
 
   let allProjects: Project[] = [];
   let offset = 0;
   const limit = 100;
 
-  // Prepare the Basic Auth header
-  const authString = btoa(`${redmineApiKey}:pass`); // 'pass' can be any string
-  const headers = new Headers({
-    Authorization: `Basic ${authString}`,
-    "Content-Type": "application/json",
-  });
-
   while (true) {
-    const url = new URL(redmineProjectsUrl);
-    url.searchParams.append("limit", limit.toString());
-    url.searchParams.append("offset", offset.toString());
-
     try {
-      const response = await fetch(url.toString(), { headers });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status}`);
+      const response = await getProjects({
+        client: redmineClient,
+        path: { format: "json" },
+        query: { limit, offset }
+      })
+      if(response.error) {
+        throw new Error(`HTTP error: ${response.error}`);
       }
 
-      const data = await response.json();
-      const projects: Project[] = data.projects;
+      const projects: Project[] = response.data!.projects
 
       if (projects.length === 0) {
         // No more projects to fetch
@@ -63,22 +51,20 @@ async function fetchAllProjects(redmineAuth: RedmineAuth): Promise<Project[]> {
       offset += limit;
 
       // Check if we've fetched all projects
-      if (allProjects.length >= data.total_count) {
+      if (allProjects.length >= response.data!.total_count!) {
         // All projects fetched
         break;
       }
     } catch (error: any) {
       console.error("Failed to fetch projects from Redmine:", error.message);
       console.error("🔍 Error details:", {
-        redmineProjectsUrl,
+        redmineClient,
         offset,
-        limit,
-        headers,
+        limit
       });
       throw error;
     }
   }
-
   return allProjects;
 }
 
@@ -91,15 +77,15 @@ function getTrackerId(trackerName: string): number {
 }
 
 const LOG_PRECISELY = "lp";
-let isEntryLoggedPrecisely: (entry: TogglEntry) => boolean = (entry) => {
+let isEntryLoggedPrecisely: (entry: TogglTimeEntry) => boolean = (entry) => {
   return (
-    entry.description.includes(`@${LOG_PRECISELY}`) ||
-    entry.tags.includes(LOG_PRECISELY)
+    entry.description!.includes(`@${LOG_PRECISELY}`) ||
+    entry.tags!.includes(LOG_PRECISELY)
   );
 };
 
 function prepareRedmineEntries(
-  togglEntries: TogglEntry[],
+  togglEntries: TogglTimeEntry[],
   requiredHoursCap: number
 ): RedmineEntry[] {
   const adjustCoefficient =
@@ -107,14 +93,14 @@ function prepareRedmineEntries(
       ? 1
       : (function (): number {
           const workedDurationSeconds = togglEntries.reduce(
-            (sum, entry) => sum + entry.duration,
+            (sum, entry) => sum + entry.duration!,
             0
           );
           const workedDurationHours = workedDurationSeconds / 3600;
 
           const preciseDurationSeconds = togglEntries
             .filter(isEntryLoggedPrecisely)
-            .reduce((sum, entry) => sum + entry.duration, 0);
+            .reduce((sum, entry) => sum + entry.duration!, 0);
           const preciseDurationHours = preciseDurationSeconds / 3600;
 
           const adjustableDurationHours =
@@ -129,8 +115,8 @@ function prepareRedmineEntries(
 
   togglEntries.forEach((entry) => {
     const description = entry.description || "";
-    const durationSeconds = entry.duration;
-    const spentOn = entry.start.substring(0, 10);
+    const durationSeconds = entry.duration!;
+    const spentOn = entry.start!.substring(0, 10);
 
     const issueIdMatch = description.match(/#(\d+)/);
     const issueId = issueIdMatch ? issueIdMatch[1] : null;
@@ -144,7 +130,7 @@ function prepareRedmineEntries(
       .replace(`@${LOG_PRECISELY}`, "")
       .trim();
 
-    const activityId = getActivityId(description, entry.tags);
+    const activityId = getActivityId(description, entry.tags!);
 
     if (issueId) {
       redmineEntries.push({
@@ -163,109 +149,73 @@ function prepareRedmineEntries(
 }
 
 async function trackTimeInRedmine(
+  redmineClient: Client,
   redmineEntries: RedmineEntry[],
-  redmineAuth: RedmineAuth,
-  redmineUrl: string
-): Promise<void> {
-  const redmineTimeEntriesUrl = `${redmineUrl}/time_entries.json`;
-
+): Promise<RedmineTimeEntry[]> {
+  let createdEntries: RedmineTimeEntry[] = [];
   for (const entry of redmineEntries) {
-    try {
-      await fetchJSON(redmineTimeEntriesUrl, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: createBasicAuth(redmineAuth),
-        },
-        body: JSON.stringify(entry),
-      });
-    } catch (error) {
-      console.error(
-        `Failed to track time for issue #${entry.time_entry.issue_id}:`,
-        (error as Error).message
-      );
-      console.error("🔍 Error details:", {
-        entry,
-        redmineAuth,
-        redmineUrl,
-      });
+    const response = await createTimeEntry({
+      client: redmineClient,
+      path: { format: "json" },
+      body: entry
+    })
+    if(response.error) {
+      throw new Error(`HTTP error: ${response.error}`);
+    } else {
+      createdEntries.push(response.data!.time_entry);
     }
   }
+  return createdEntries;
 }
 
 // Function to search issues using the standard Redmine API
 async function searchIssues(
-  searchQuery: string,
-  redmineAuth: RedmineAuth
-): Promise<any[]> {
-  const encodedQuery = encodeURIComponent(searchQuery);
-  const url =
-    `${validateAndAdjustRedmineUrl(process.env.REDMINE_API_URL!)}issues.json?` +
-    `offset=0&limit=20&` +
-    `f[]=subject&op[subject]=~&v[subject][]=${encodedQuery}` +
-    `&sort=updated_on:desc`;
-
-  try {
-    const response = await fetchJSON(url, {
-      headers: {
-        Authorization: createBasicAuth(redmineAuth),
-      },
-    });
-    return response.issues;
-  } catch (err) {
-    console.error("Failed to search issues:", err);
-    console.error("🔍 Error details:", {
-      searchQuery,
-      redmineAuth,
-      url,
-    });
-    return [];
+  redmineClient: Client,
+  searchQuery: string
+): Promise<Search[]> {
+  const response = await search({
+    client: redmineClient,
+    path: { format: "json" },
+    query: { offset: 0, limit: 20, q: searchQuery }
+  })
+  if(response.error) {
+    throw new Error(`HTTP error: ${response.error}`);
   }
+  return response.data!.results;
 }
 
 // Function to fetch the user's tracked time entries from Redmine
 async function fetchUserTimeEntries(
-  redmineAuth: RedmineAuth,
+  redmineClient: Client,
   date: string
-): Promise<any[]> {
-  const url =
-    `${validateAndAdjustRedmineUrl(
-      process.env.REDMINE_API_URL!
-    )}time_entries.json?` + `user_id=me&spent_on=${date}`;
+): Promise<RedmineTimeEntry[]> {
 
-  try {
-    const response = await fetchJSON(url, {
-      headers: {
-        Authorization: createBasicAuth(redmineAuth),
-      },
-    });
-    return response.time_entries;
-  } catch (err) {
-    console.error("Failed to fetch time entries:", err);
-    console.error("🔍 Error details:", {
-      date,
-      redmineAuth,
-      url,
-    });
-    return [];
+  const response = await getTimeEntries({
+    client: redmineClient,
+    path: { format: "json" },
+    query: { user_id: ["me"], spent_on: date },
+
+  });
+  if(response.error) {
+    throw new Error(`HTTP error: ${response.error}`);
   }
+  return response.data!.time_entries;
 }
 
 // Function to delete a time entry from Redmine
-async function deleteTimeEntry(entryId: number, redmineAuth: RedmineAuth) {
-  const url = `${validateAndAdjustRedmineUrl(
-    process.env.REDMINE_API_URL!
-  )}time_entries/${entryId}.json`;
-  const response = await fetch(url, {
-    method: "DELETE",
-    headers: {
-      Authorization: createBasicAuth(redmineAuth),
-    },
+async function deleteTimeEntry(
+  redmineClient: Client,
+  entryId: number
+): Promise<void> {
+
+  const response = await redmineDeleteTimeEntry({
+    client: redmineClient,
+    path: { format: "json", time_entry_id: entryId }
   });
-  if (!response.ok) {
-    throw new Error(`Response status: ${response.status}`);
+  if(response.error) {
+    throw new Error(`HTTP error: ${response.error}`);
   }
-  return response;
+  return response.data;
 }
 
 export {

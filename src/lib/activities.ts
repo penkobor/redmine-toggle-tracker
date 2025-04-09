@@ -12,6 +12,6 @@ export function getActivityId(description: string, tags: string[]): number {
     }
   }
   const defaultTag = mapOfActivities['_default'];
-  console.log(`❌ Tag or label not found, will upload with default ${defaultTag}`);
+  console.log(`❌ Tag or label not found, will upload with default '${defaultTag}'`);
   return mapOfActivities[defaultTag];
 }
