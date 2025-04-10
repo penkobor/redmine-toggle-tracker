@@ -1,9 +1,9 @@
 import React from "react";
 import { Box, Text } from "ink";
 import { useQuery } from "@tanstack/react-query";
-import { redmineClient } from "../constants.js";
 import { fetchUserTimeEntries } from "../lib/redmine.js";
 import { getDaysFromDate } from "../lib/helpers.js";
+import { redmineClient } from "toggl-redmine-bridge";
 
 const today = new Date();
 const year = today.getFullYear();
@@ -21,7 +21,10 @@ export const MonthlySummary = () => {
           const dayName = date.toLocaleDateString("en-US", { weekday: "long" });
           date.setDate(date.getDate() + 1);
           const dateString = date.toISOString().split("T")[0];
-          const entries = await fetchUserTimeEntries(redmineClient, dateString);
+          const entries = await fetchUserTimeEntries(
+            redmineClient as any,
+            dateString
+          );
           const totalHours = entries.reduce(
             (acc, entry) => acc + entry.hours,
             0

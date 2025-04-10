@@ -3,9 +3,9 @@ import { CommandsProps } from "./types.js";
 import { getDateString } from "../lib/helpers.js";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { deleteTimeEntry, fetchUserTimeEntries } from "../lib/redmine.js";
-import { redmineClient } from "../constants.js";
 import { Box, Text } from "ink";
 import SelectInput from "ink-select-input";
+import { redmineClient } from "toggl-redmine-bridge";
 
 export const DeleteEntry = ({ args }: CommandsProps) => {
   const [arg1] = args ?? [];
@@ -20,14 +20,14 @@ export const DeleteEntry = ({ args }: CommandsProps) => {
     queryKey: ["delete", date],
     queryFn: () => {
       // Implement the delete logic here
-      return fetchUserTimeEntries(redmineClient, date);
+      return fetchUserTimeEntries(redmineClient as any, date);
     },
   });
 
   const { mutate, isPending, isSuccess, isError, error } = useMutation({
     mutationKey: ["delete", date],
     mutationFn: async (id: number) => {
-      await deleteTimeEntry(redmineClient, id);
+      await deleteTimeEntry(redmineClient as any, id);
     },
     onSuccess: () => {
       refetch();

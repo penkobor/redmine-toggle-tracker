@@ -3,8 +3,8 @@ import { getDateString } from "../lib/helpers.js";
 import { fetchUserTimeEntries } from "../lib/redmine.js";
 import { Box, Text } from "ink";
 import { useQuery } from "@tanstack/react-query";
-import { redmineClient } from "../constants.js";
 import { CommandsProps } from "./types.js";
+import { redmineClient } from "toggl-redmine-bridge";
 
 export const Entries = ({ args }: CommandsProps) => {
   const [arg1] = args ?? [];
@@ -12,7 +12,7 @@ export const Entries = ({ args }: CommandsProps) => {
   const date = getDateString(daysAgo);
   const { data: entries = [], isLoading } = useQuery({
     queryKey: ["entries", date],
-    queryFn: () => fetchUserTimeEntries(redmineClient, date),
+    queryFn: () => fetchUserTimeEntries(redmineClient as any, date),
     refetchOnWindowFocus: false,
   });
 
@@ -28,9 +28,9 @@ export const Entries = ({ args }: CommandsProps) => {
     <Box flexDirection="column">
       {entries.map((entry, idx) => {
         return (
-          <Text
-            key={`${entry.issue!.id}-${idx}`}
-          >{`- Issue #${entry.issue!.id}: ${entry.hours}h - ${entry.comments}`}</Text>
+          <Text key={`${entry.issue!.id}-${idx}`}>{`- Issue #${
+            entry.issue!.id
+          }: ${entry.hours}h - ${entry.comments}`}</Text>
         );
       })}
     </Box>
