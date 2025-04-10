@@ -4,7 +4,7 @@ import React, { useState } from "react";
 import SelectInput from "ink-select-input";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { fetchAllProjects } from "../lib/redmine.js";
-import { createIssue } from "../api-redmine/sdk.gen.js";
+import { createIssue } from "toggl-redmine-bridge/api-redmine";
 import { ConfirmInput } from "./ConfirmInput.js";
 import { redmineClient } from "toggl-redmine-bridge";
 

@@ -1,6 +1,14 @@
 import { getActivityId } from "./activities.js";
-import { ModelsTimeEntry as TogglTimeEntry } from "../api-toggl/index.js";
-import { createTimeEntry, getProjects, getTimeEntries, TimeEntry as RedmineTimeEntry, deleteTimeEntry as redmineDeleteTimeEntry, search, Search } from "../api-redmine/index.js";
+import { ModelsTimeEntry as TogglTimeEntry } from "toggl-redmine-bridge/api-toggl";
+import {
+  createTimeEntry,
+  getProjects,
+  getTimeEntries,
+  TimeEntry as RedmineTimeEntry,
+  deleteTimeEntry as redmineDeleteTimeEntry,
+  search,
+  Search,
+} from "toggl-redmine-bridge/api-redmine";
 import { Client } from "@hey-api/client-fetch";
 
 // Redmine un-official OpenAPI does define the TimeEntry model but it is used only for responses (?)
@@ -21,8 +29,7 @@ interface Project {
 }
 
 // Function to fetch all projects from Redmine
-async function fetchAllProjects(redmineClient: Client): Promise<Project[]> {
-
+async function fetchAllProjects(redmineClient: any): Promise<Project[]> {
   let allProjects: Project[] = [];
   let offset = 0;
   const limit = 100;
@@ -32,13 +39,13 @@ async function fetchAllProjects(redmineClient: Client): Promise<Project[]> {
       const response = await getProjects({
         client: redmineClient,
         path: { format: "json" },
-        query: { limit, offset }
-      })
-      if(response.error) {
+        query: { limit, offset },
+      });
+      if (response.error) {
         throw new Error(`HTTP error: ${response.error}`);
       }
 
-      const projects: Project[] = response.data!.projects
+      const projects: Project[] = response.data!.projects;
 
       if (projects.length === 0) {
         // No more projects to fetch
@@ -60,7 +67,7 @@ async function fetchAllProjects(redmineClient: Client): Promise<Project[]> {
       console.error("🔍 Error details:", {
         redmineClient,
         offset,
-        limit
+        limit,
       });
       throw error;
     }
@@ -149,17 +156,17 @@ function prepareRedmineEntries(
 }
 
 async function trackTimeInRedmine(
-  redmineClient: Client,
-  redmineEntries: RedmineEntry[],
+  redmineClient: any,
+  redmineEntries: RedmineEntry[]
 ): Promise<RedmineTimeEntry[]> {
   let createdEntries: RedmineTimeEntry[] = [];
   for (const entry of redmineEntries) {
     const response = await createTimeEntry({
       client: redmineClient,
       path: { format: "json" },
-      body: entry
-    })
-    if(response.error) {
+      body: entry,
+    });
+    if (response.error) {
       throw new Error(`HTTP error: ${response.error}`);
     } else {
       createdEntries.push(response.data!.time_entry);
@@ -170,15 +177,15 @@ async function trackTimeInRedmine(
 
 // Function to search issues using the standard Redmine API
 async function searchIssues(
-  redmineClient: Client,
+  redmineClient: any,
   searchQuery: string
 ): Promise<Search[]> {
   const response = await search({
     client: redmineClient,
     path: { format: "json" },
-    query: { offset: 0, limit: 20, q: searchQuery }
-  })
-  if(response.error) {
+    query: { offset: 0, limit: 20, q: searchQuery },
+  });
+  if (response.error) {
     throw new Error(`HTTP error: ${response.error}`);
   }
   return response.data!.results;
@@ -186,17 +193,15 @@ async function searchIssues(
 
 // Function to fetch the user's tracked time entries from Redmine
 async function fetchUserTimeEntries(
-  redmineClient: Client,
+  redmineClient: any,
   date: string
 ): Promise<RedmineTimeEntry[]> {
-
   const response = await getTimeEntries({
     client: redmineClient,
     path: { format: "json" },
     query: { user_id: ["me"], spent_on: date },
-
   });
-  if(response.error) {
+  if (response.error) {
     throw new Error(`HTTP error: ${response.error}`);
   }
   return response.data!.time_entries;
@@ -204,18 +209,17 @@ async function fetchUserTimeEntries(
 
 // Function to delete a time entry from Redmine
 async function deleteTimeEntry(
-  redmineClient: Client,
+  redmineClient: any,
   entryId: number
 ): Promise<void> {
-
   const response = await redmineDeleteTimeEntry({
     client: redmineClient,
-    path: { format: "json", time_entry_id: entryId }
+    path: { format: "json", time_entry_id: entryId },
   });
-  if(response.error) {
+  if (response.error) {
     throw new Error(`HTTP error: ${response.error}`);
   }
-  // deleteTimeEntry response.data is void 
+  // deleteTimeEntry response.data is void
 }
 
 export {
