@@ -20,14 +20,14 @@ export const DeleteEntry = ({ args }: CommandsProps) => {
     queryKey: ["delete", date],
     queryFn: () => {
       // Implement the delete logic here
-      return fetchUserTimeEntries(redmineClient as any, date);
+      return fetchUserTimeEntries(redmineClient, date);
     },
   });
 
   const { mutate, isPending, isSuccess, isError, error } = useMutation({
     mutationKey: ["delete", date],
     mutationFn: async (id: number) => {
-      await deleteTimeEntry(redmineClient as any, id);
+      await deleteTimeEntry(redmineClient, id);
     },
     onSuccess: () => {
       refetch();

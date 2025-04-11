@@ -21,10 +21,7 @@ export const MonthlySummary = () => {
           const dayName = date.toLocaleDateString("en-US", { weekday: "long" });
           date.setDate(date.getDate() + 1);
           const dateString = date.toISOString().split("T")[0];
-          const entries = await fetchUserTimeEntries(
-            redmineClient as any,
-            dateString
-          );
+          const entries = await fetchUserTimeEntries(redmineClient, dateString);
           const totalHours = entries.reduce(
             (acc, entry) => acc + entry.hours,
             0

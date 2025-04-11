@@ -28,7 +28,7 @@ export const CreateTask = () => {
   const { data: projects = [], isLoading } = useQuery({
     queryKey: ["projects"],
     queryFn: async () => {
-      return fetchAllProjects(redmineClient as any);
+      return fetchAllProjects(redmineClient);
     },
   });
 
@@ -58,7 +58,7 @@ export const CreateTask = () => {
         },
       };
       const response = await createIssue({
-        client: redmineClient as any,
+        client: redmineClient,
         path: { format: "json" },
         body: issueData,
       });

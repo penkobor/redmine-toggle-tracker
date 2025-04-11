@@ -12,7 +12,7 @@ export const Entries = ({ args }: CommandsProps) => {
   const date = getDateString(daysAgo);
   const { data: entries = [], isLoading } = useQuery({
     queryKey: ["entries", date],
-    queryFn: () => fetchUserTimeEntries(redmineClient as any, date),
+    queryFn: () => fetchUserTimeEntries(redmineClient, date),
     refetchOnWindowFocus: false,
   });
 

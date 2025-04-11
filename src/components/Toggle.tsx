@@ -31,7 +31,7 @@ const ToggleInternal = ({
     queryKey: ["toggle", date],
     queryFn: async () => {
       const toggleEntries = await fetchTogglTimeEntries(
-        togglClient as any,
+        togglClient,
         date,
         togglWorkspaceId
       );
@@ -44,7 +44,7 @@ const ToggleInternal = ({
   const { mutate, isSuccess, isPending } = useMutation({
     mutationKey: ["track", date],
     mutationFn: async () => {
-      await trackTimeInRedmine(redmineClient as any, entries);
+      await trackTimeInRedmine(redmineClient, entries);
     },
     onSuccess: () => {
       exit();

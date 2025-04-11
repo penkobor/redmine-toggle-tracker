@@ -16,7 +16,7 @@ export const Search = () => {
     queryKey: ["search", searchQuery],
     queryFn: () => {
       // Implement the search logic here
-      return searchIssues(redmineClient as any, searchQuery);
+      return searchIssues(redmineClient, searchQuery);
     },
     enabled: searchQuery.length > 0,
   });
