@@ -5,7 +5,7 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { deleteTimeEntry, fetchUserTimeEntries } from "../lib/redmine.js";
 import { Box, Text } from "ink";
 import SelectInput from "ink-select-input";
-import { redmineClient } from "toggl-redmine-bridge";
+import { redmineClient } from "@saboit/toggl-redmine-bridge";
 
 export const DeleteEntry = ({ args }: CommandsProps) => {
   const [arg1] = args ?? [];

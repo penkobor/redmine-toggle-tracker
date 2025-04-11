@@ -3,7 +3,7 @@ import { Box, Text } from "ink";
 import { useQuery } from "@tanstack/react-query";
 import { searchIssues } from "../lib/redmine.js";
 import TextInput from "ink-text-input";
-import { redmineClient } from "toggl-redmine-bridge";
+import { redmineClient } from "@saboit/toggl-redmine-bridge";
 
 export const Search = () => {
   const [currentValue, setCurrentValue] = useState("");
@@ -24,8 +24,6 @@ export const Search = () => {
   const handleChange = (value: string) => {
     setCurrentValue(value);
   };
-
-  console.log("error", error);
 
   return (
     <Box flexDirection="column">

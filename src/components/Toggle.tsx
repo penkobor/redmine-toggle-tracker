@@ -8,7 +8,7 @@ import { prepareRedmineEntries, trackTimeInRedmine } from "../lib/redmine.js";
 import { ConfirmInput } from "./ConfirmInput.js";
 import SelectInput from "ink-select-input";
 import TextInput from "ink-text-input";
-import { togglClient, redmineClient } from "toggl-redmine-bridge";
+import { togglClient, redmineClient } from "@saboit/toggl-redmine-bridge";
 
 const togglWorkspaceId = process.env.TOGGL_WORKSPACE_ID!;
 

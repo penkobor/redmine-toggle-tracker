@@ -3,7 +3,7 @@ import { fileURLToPath } from "url";
 import path from "path";
 import { createBasicAuth } from "./lib/auth.js";
 import { validateAndAdjustRedmineUrl } from "./lib/helpers.js";
-import { initConfig, redmineClient, togglClient } from "toggl-redmine-bridge";
+import { initConfig } from "@saboit/toggl-redmine-bridge";
 
 // Convert the URL to a file path and calculate the project root
 const __filename = fileURLToPath(import.meta.url);

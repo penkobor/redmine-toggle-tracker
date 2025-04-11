@@ -1,7 +1,7 @@
 import {
   getMyTimeEntries,
   ModelsTimeEntry,
-} from "toggl-redmine-bridge/api-toggl";
+} from "@saboit/toggl-redmine-bridge/api-toggl";
 
 export async function fetchTogglTimeEntries(
   client: any,

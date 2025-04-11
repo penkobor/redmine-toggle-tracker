@@ -4,7 +4,7 @@ import { fetchUserTimeEntries } from "../lib/redmine.js";
 import { Box, Text } from "ink";
 import { useQuery } from "@tanstack/react-query";
 import { CommandsProps } from "./types.js";
-import { redmineClient } from "toggl-redmine-bridge";
+import { redmineClient } from "@saboit/toggl-redmine-bridge";
 
 export const Entries = ({ args }: CommandsProps) => {
   const [arg1] = args ?? [];

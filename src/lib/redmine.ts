@@ -1,5 +1,5 @@
 import { getActivityId } from "./activities.js";
-import { ModelsTimeEntry as TogglTimeEntry } from "toggl-redmine-bridge/api-toggl";
+import { ModelsTimeEntry as TogglTimeEntry } from "@saboit/toggl-redmine-bridge/api-toggl";
 import {
   createTimeEntry,
   getProjects,
@@ -8,8 +8,7 @@ import {
   deleteTimeEntry as redmineDeleteTimeEntry,
   search,
   Search,
-} from "toggl-redmine-bridge/api-redmine";
-import { Client } from "@hey-api/client-fetch";
+} from "@saboit/toggl-redmine-bridge/api-redmine";
 
 // Redmine un-official OpenAPI does define the TimeEntry model but it is used only for responses (?)
 // And the call `createTimeEntry` parameter defines slightly different structure (inline, anonymous)

@@ -4,9 +4,9 @@ import React, { useState } from "react";
 import SelectInput from "ink-select-input";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { fetchAllProjects } from "../lib/redmine.js";
-import { createIssue } from "toggl-redmine-bridge/api-redmine";
+import { createIssue } from "@saboit/toggl-redmine-bridge/api-redmine";
 import { ConfirmInput } from "./ConfirmInput.js";
-import { redmineClient } from "toggl-redmine-bridge";
+import { redmineClient } from "@saboit/toggl-redmine-bridge";
 
 const taskOptions = [
   { label: "Task", value: "Task" },
