@@ -12,6 +12,9 @@ import { MonthlySummary } from "./components/MonthlySummary.js";
 import { DeleteEntry } from "./components/DeleteEntry.js";
 import { CreateTask } from "./components/CreateTask.js";
 import SelectInput from "ink-select-input";
+import { init } from "./constants.js";
+
+init();
 
 const OutputMap: Record<string, (props: CommandsProps) => JSX.Element> = {
   "--help": Help,

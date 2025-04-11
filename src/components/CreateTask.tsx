@@ -4,9 +4,9 @@ import React, { useState } from "react";
 import SelectInput from "ink-select-input";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { fetchAllProjects } from "../lib/redmine.js";
-import { redmineClient } from "../constants.js";
-import { createIssue } from "../api-redmine/sdk.gen.js";
+import { createIssue } from "@saboit/toggl-redmine-bridge/api-redmine";
 import { ConfirmInput } from "./ConfirmInput.js";
+import { redmineClient } from "@saboit/toggl-redmine-bridge";
 
 const taskOptions = [
   { label: "Task", value: "Task" },
@@ -60,12 +60,14 @@ export const CreateTask = () => {
       const response = await createIssue({
         client: redmineClient,
         path: { format: "json" },
-        body: issueData
+        body: issueData,
       });
-      if(response.error) {
+      if (response.error) {
         throw new Error(`Error creating task: ${response.error}`);
       }
-      console.log(`Task created successfully with ID #${response.data!.issue.id}`);
+      console.log(
+        `Task created successfully with ID #${response.data!.issue.id}`
+      );
     },
     onSuccess: () => {
       exit();
