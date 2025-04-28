@@ -1,11 +1,9 @@
 import dotenv from "dotenv";
 import { fileURLToPath } from "url";
 import path from "path";
-import { client as redmineClient } from "./api-redmine/client.gen.js";
-import { client as togglClient } from "./api-toggl/client.gen.js";
 import { createBasicAuth } from "./lib/auth.js";
 import { validateAndAdjustRedmineUrl } from "./lib/helpers.js";
-
+import { initConfig } from "@saboit/toggl-redmine-bridge";
 
 // Convert the URL to a file path and calculate the project root
 const __filename = fileURLToPath(import.meta.url);
@@ -19,16 +17,6 @@ const redmineAuth = {
   username: process.env.REDMINE_TOKEN!,
   password: "pass",
 };
-const redmineUrl = validateAndAdjustRedmineUrl(
-  process.env.REDMINE_API_URL!
-);
-
-redmineClient.setConfig({
-  baseUrl: redmineUrl,
-  headers: {
-    Authorization: createBasicAuth(redmineAuth)
-  }
-});
 
 const togglAuth = {
   username: process.env.TOGGL_API_TOKEN!,
@@ -36,14 +24,17 @@ const togglAuth = {
 };
 const togglUrl = process.env.TOGGL_API_URL!;
 
-togglClient.setConfig({
-  baseUrl: togglUrl,
-  headers: {
-    Authorization: createBasicAuth(togglAuth)
-  }
-});
+const redmineUrl = validateAndAdjustRedmineUrl(process.env.REDMINE_API_URL!);
 
-export {
-  redmineClient,
-  togglClient
+export const init = () => {
+  initConfig({
+    redmine: {
+      baseUrl: redmineUrl,
+      token: createBasicAuth(redmineAuth),
+    },
+    toggl: {
+      baseUrl: togglUrl,
+      token: createBasicAuth(togglAuth),
+    },
+  });
 };

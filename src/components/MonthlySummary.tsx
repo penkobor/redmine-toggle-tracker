@@ -1,9 +1,9 @@
 import React from "react";
 import { Box, Text } from "ink";
 import { useQuery } from "@tanstack/react-query";
-import { redmineClient } from "../constants.js";
 import { fetchUserTimeEntries } from "../lib/redmine.js";
 import { getDaysFromDate } from "../lib/helpers.js";
+import { redmineClient } from "@saboit/toggl-redmine-bridge";
 
 const today = new Date();
 const year = today.getFullYear();

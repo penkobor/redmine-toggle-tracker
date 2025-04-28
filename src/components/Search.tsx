@@ -1,14 +1,18 @@
 import React, { useState } from "react";
 import { Box, Text } from "ink";
 import { useQuery } from "@tanstack/react-query";
-import { redmineClient } from "../constants.js";
 import { searchIssues } from "../lib/redmine.js";
 import TextInput from "ink-text-input";
+import { redmineClient } from "@saboit/toggl-redmine-bridge";
 
 export const Search = () => {
   const [currentValue, setCurrentValue] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
-  const { data = [], isLoading } = useQuery({
+  const {
+    data = [],
+    isLoading,
+    error,
+  } = useQuery({
     queryKey: ["search", searchQuery],
     queryFn: () => {
       // Implement the search logic here
